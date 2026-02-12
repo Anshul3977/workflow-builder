@@ -145,8 +145,8 @@ export default function BuilderPage() {
 
   return (
     <AuthGuard>
-      <div className="space-y-8">
-        <div className="flex items-start justify-between">
+      <div className="space-y-10">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Workflow Builder</h1>
             <p className="text-muted-foreground mt-2">
@@ -240,7 +240,7 @@ export default function BuilderPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
           <div className="lg:col-span-2 space-y-6">
             <div className="space-y-2">
               <label htmlFor="input" className="text-sm font-medium">

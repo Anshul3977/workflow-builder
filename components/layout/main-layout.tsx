@@ -8,7 +8,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container max-w-screen-2xl py-8 md:py-12">
+      <main className="container max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
         {children}
       </main>
     </div>

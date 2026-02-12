@@ -44,8 +44,8 @@ export default function StatusPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">System Status</h1>
           <p className="text-muted-foreground mt-2">
@@ -70,7 +70,7 @@ export default function StatusPage() {
           ))}
         </div>
       ) : health ? (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <Card className="p-6 md:p-8 border-2">
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-muted-foreground">Overall Status</h3>
@@ -78,10 +78,10 @@ export default function StatusPage() {
                 <span className="text-3xl font-bold capitalize">{getOverallStatus()}</span>
                 <span
                   className={`text-sm font-medium px-2 py-1 rounded ${getOverallStatus() === 'healthy'
-                      ? 'bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100'
-                      : getOverallStatus() === 'degraded'
-                        ? 'bg-yellow-100 text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100'
-                        : 'bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100'
+                    ? 'bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100'
+                    : getOverallStatus() === 'degraded'
+                      ? 'bg-yellow-100 text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100'
+                      : 'bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100'
                     }`}
                 >
                   {getOverallStatus() === 'healthy' ? '✓' : getOverallStatus() === 'degraded' ? '⚠' : '✕'}
@@ -90,7 +90,7 @@ export default function StatusPage() {
             </div>
           </Card>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <h3 className="text-lg font-semibold">Services</h3>
             <div className="space-y-3">
               <HealthIndicator health={health.backend} />
@@ -99,7 +99,7 @@ export default function StatusPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
             <Card className="p-5 md:p-6">
               <p className="text-sm text-muted-foreground">Uptime</p>
               <p className="text-2xl font-bold mt-1">{health.uptime.toFixed(2)}%</p>
