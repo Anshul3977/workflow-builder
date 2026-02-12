@@ -97,7 +97,26 @@ app.get('/api/health', async (_req: Request, res: Response) => {
   })
 })
 
-// Workflow routes
+// Rate limiting
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 requests per user per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    if ((req as any).user?.id) return (req as any).user.id
+    return ipKeyGenerator(req)
+  },
+  message: {
+    success: false,
+    error: 'Too many requests, please try again later.',
+  },
+})
+
+// Apply rate limiting to workflow routes
+app.use('/api/workflows', limiter)
 app.use('/api', workflowRoutes)
 app.use('/api', savedWorkflowRoutes)
 

@@ -76,7 +76,7 @@ Provide the categorization in a clear format like:
   },
 
   translate: (text: string, config?: Record<string, unknown>) => {
-    const targetLanguage = (config?.targetLanguage as string) || 'English'
+    const targetLanguage = (config?.targetLanguage as string) || 'Hindi'
 
     return `Translate the following text into ${targetLanguage}. Preserve the original meaning and tone as closely as possible:
 
@@ -102,28 +102,40 @@ export async function processStep(input: ProcessStepInput): Promise<ProcessStepO
 
   const prompt = PROMPTS[input.type](input.text, input.config)
 
-  const chatCompletion = await getGroq().chat.completions.create({
-    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    max_tokens: 1024,
-    messages: [
+  // Create an AbortController for the timeout
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30_000) // 30 seconds
+
+  try {
+    const chatCompletion = await getGroq().chat.completions.create(
       {
-        role: 'user',
-        content: prompt,
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
       },
-    ],
-  })
-
-  const processingTime = Date.now() - startTime
-  const result = chatCompletion.choices[0]?.message?.content || ''
-
-  return {
-    result,
-    processingTime,
-    tokensUsed: chatCompletion.usage
-      ? {
-        input: chatCompletion.usage.prompt_tokens ?? 0,
-        output: chatCompletion.usage.completion_tokens ?? 0,
+      {
+        signal: controller.signal,
       }
-      : undefined,
+    )
+
+    const processingTime = Date.now() - startTime
+    const result = chatCompletion.choices[0]?.message?.content || ''
+
+    return {
+      result,
+      processingTime,
+      tokensUsed: chatCompletion.usage
+        ? {
+          input: chatCompletion.usage.prompt_tokens ?? 0,
+          output: chatCompletion.usage.completion_tokens ?? 0,
+        }
+        : undefined,
+    }
+  } finally {
+    clearTimeout(timeoutId)
   }
 }

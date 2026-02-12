@@ -90,18 +90,22 @@ export function StepConfigurator({ step, onUpdate }: StepConfiguratorProps) {
             <div className="space-y-2">
               <Label htmlFor="target-lang">Target Language</Label>
               <Select
-                value={(parameters.targetLanguage as string) || 'es'}
+                value={(parameters.targetLanguage as string) || 'Hindi'}
                 onValueChange={(value) => handleParameterChange('targetLanguage', value)}
               >
                 <SelectTrigger id="target-lang">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="es">Spanish</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                  <SelectItem value="de">German</SelectItem>
-                  <SelectItem value="zh">Chinese</SelectItem>
-                  <SelectItem value="ja">Japanese</SelectItem>
+                  <SelectItem value="Hindi">Hindi</SelectItem>
+                  <SelectItem value="Spanish">Spanish</SelectItem>
+                  <SelectItem value="French">French</SelectItem>
+                  <SelectItem value="German">German</SelectItem>
+                  <SelectItem value="Chinese">Chinese</SelectItem>
+                  <SelectItem value="Japanese">Japanese</SelectItem>
+                  <SelectItem value="Arabic">Arabic</SelectItem>
+                  <SelectItem value="Portuguese">Portuguese</SelectItem>
+                  <SelectItem value="Marathi">Marathi</SelectItem>
                 </SelectContent>
               </Select>
             </div>

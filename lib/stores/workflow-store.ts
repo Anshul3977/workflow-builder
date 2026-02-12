@@ -17,6 +17,15 @@ interface WorkflowStore {
   markSaved: () => void
 }
 
+const defaultParameters: Record<string, Record<string, unknown>> = {
+  summarize: { length: 'medium' },
+  extract: { topics: 'key points' },
+  categorize: { categories: 'topic, sentiment, urgency' },
+  translate: { targetLanguage: 'Hindi' },
+  sentiment: {},
+  clean: {},
+}
+
 const defaultWorkflow: Workflow = {
   id: uuidv4(),
   name: 'Untitled Workflow',
@@ -44,7 +53,7 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
         position: state.workflow.steps.length,
         config: {
           type,
-          parameters: {},
+          parameters: defaultParameters[type] || {},
         },
       }
       return {

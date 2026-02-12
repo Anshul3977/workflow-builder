@@ -37,15 +37,25 @@ router.post('/workflows', authMiddleware, async (req: Request<{}, {}, ProcessWor
     // Update status to running
     await updateWorkflowRun(run.id, { status: 'running' })
 
-    // Execute workflow steps sequentially
-    const execution = await executeWorkflowSteps(run.id, validatedBody.steps, validatedBody.input)
+    try {
+      // Execute workflow steps sequentially
+      const execution = await executeWorkflowSteps(run.id, validatedBody.steps, validatedBody.input)
 
-    // Update run with results
-    await updateWorkflowRun(run.id, {
-      status: execution.status,
-      results: execution,
-      total_processing_time: execution.totalProcessingTime,
-    })
+      // Update run with results
+      await updateWorkflowRun(run.id, {
+        status: execution.status,
+        results: execution,
+        total_processing_time: execution.totalProcessingTime,
+      })
+    } catch (error) {
+      // Guarantee the run is marked failed even on unexpected crash
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      await updateWorkflowRun(run.id, {
+        status: 'failed',
+        error_message: errorMessage,
+      })
+      throw error // Re-throw to be caught by the outer catch block for the API response
+    }
 
     // Fetch updated run
     const updatedRun = await getWorkflowRun(run.id)
