@@ -107,7 +107,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     if ((req as any).user?.id) return (req as any).user.id
-    return ipKeyGenerator(req)
+return ipKeyGenerator(req as any)
   },
   message: {
     success: false,
