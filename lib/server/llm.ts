@@ -2,7 +2,8 @@ import Groq from 'groq-sdk'
 
 export type StepType = 'clean' | 'summarize' | 'extract' | 'categorize' | 'translate' | 'sentiment'
 export const STEP_TYPES: StepType[] = ['clean', 'summarize', 'extract', 'categorize', 'translate', 'sentiment']
-export const MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
+// Groq retires models over time; GROQ_MODEL lets a deployment switch without a code change.
+export const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b'
 
 export class AiKeyMissingError extends Error {
   code = 'AI_KEY_MISSING'
@@ -56,7 +57,13 @@ export async function runStep(type: StepType, text: string, params: Params): Pro
   const start = Date.now()
   const client = groq()
   const res = await client.chat.completions.create(
-    { model: MODEL, messages: [{ role: 'user', content: PROMPTS[type](text, params) }], max_tokens: 900 },
+    {
+      model: MODEL,
+      messages: [{ role: 'user', content: PROMPTS[type](text, params) }],
+      // gpt-oss is a reasoning model: keep reasoning short and leave room for it in the token budget
+      ...(MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' as const } : {}),
+      max_completion_tokens: 2000,
+    },
     { timeout: 30_000 },
   )
   return {

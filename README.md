@@ -9,7 +9,7 @@ Chain LLM text steps (clean, summarize, extract, categorize, translate, sentimen
 - **App and API in one Next.js 16 project on Vercel.** Route handlers under `app/api/*` replace the old Express server.
 - **Neon Postgres** (Singapore, free plan) through `@neondatabase/serverless`. Schema: `scripts/schema.sql`.
 - **Neon Auth** (managed Better Auth) for email and password login. Sessions are httpOnly cookies, so the API reads the user on the server.
-- **Groq** (`llama-4-scout-17b`) runs each step. A step's output becomes the next step's input, and a run stops at the first failing step.
+- **Groq** (`openai/gpt-oss-20b` by default, override with `GROQ_MODEL`) runs each step. A step's output becomes the next step's input, and a run stops at the first failing step.
 - **Demo mode:** guests can only run seeded templates (steps come from the database, not the client), with input capped at 2,000 characters and 5 runs per hour per salted IP hash. Signed-in users get 30 runs per hour.
 
 | Route | What it does |
