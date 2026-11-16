@@ -47,28 +47,103 @@ const PROMPTS: Record<StepType, (text: string, p: Params) => string> = {
     `Analyze the sentiment of the following text. Give: overall sentiment (positive, negative, neutral or mixed), confidence (high, medium, low), the main emotional tones, and a one-line reason.\n\nText: ${text}\n\nUse a short structured format.`,
 }
 
+export interface StepTrace {
+  model: string
+  /** Wall time for the whole step, ms. */
+  latencyMs: number
+  /** Time to the first output token, ms (streaming only). */
+  ttftMs: number | null
+  inputTokens: number
+  outputTokens: number
+  /** Reasoning tokens, counted inside outputTokens, for reasoning models. */
+  reasoningTokens: number
+  /** Groq's server-side generation time, ms, when reported. */
+  providerMs: number | null
+  startedAt: string
+}
+
 export interface StepOutput {
   result: string
   processingTime: number
   tokensUsed?: { input: number; output: number }
+  trace: StepTrace
 }
 
-export async function runStep(type: StepType, text: string, params: Params): Promise<StepOutput> {
+type Usage = {
+  prompt_tokens?: number
+  completion_tokens?: number
+  total_time?: number
+  completion_tokens_details?: { reasoning_tokens?: number }
+}
+
+function request(type: StepType, text: string, params: Params) {
+  return {
+    model: MODEL,
+    messages: [{ role: 'user' as const, content: PROMPTS[type](text, params) }],
+    // gpt-oss is a reasoning model: keep reasoning short and leave room for it in the token budget
+    ...(MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' as const } : {}),
+    max_completion_tokens: 2000,
+  }
+}
+
+export function buildTrace(start: number, firstToken: number | null, usage: Usage | undefined, model = MODEL): StepTrace {
+  const end = Date.now()
+  return {
+    model,
+    latencyMs: end - start,
+    ttftMs: firstToken === null ? null : firstToken - start,
+    inputTokens: usage?.prompt_tokens ?? 0,
+    outputTokens: usage?.completion_tokens ?? 0,
+    reasoningTokens: usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+    providerMs: usage?.total_time != null ? Math.round(usage.total_time * 1000) : null,
+    startedAt: new Date(start).toISOString(),
+  }
+}
+
+function toOutput(result: string, trace: StepTrace): StepOutput {
+  return {
+    result,
+    processingTime: trace.latencyMs,
+    tokensUsed: { input: trace.inputTokens, output: trace.outputTokens },
+    trace,
+  }
+}
+
+/** Runs one step and calls onDelta with each chunk of visible output as Groq streams it. */
+export async function streamStep(
+  type: StepType,
+  text: string,
+  params: Params,
+  onDelta: (chunk: string) => void = () => {},
+  signal?: AbortSignal,
+): Promise<StepOutput> {
   const start = Date.now()
   const client = groq()
-  const res = await client.chat.completions.create(
-    {
-      model: MODEL,
-      messages: [{ role: 'user', content: PROMPTS[type](text, params) }],
-      // gpt-oss is a reasoning model: keep reasoning short and leave room for it in the token budget
-      ...(MODEL.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' as const } : {}),
-      max_completion_tokens: 2000,
-    },
-    { timeout: 30_000 },
+  const stream = await client.chat.completions.create(
+    { ...request(type, text, params), stream: true, stream_options: { include_usage: true } } as Parameters<typeof client.chat.completions.create>[0] & { stream: true },
+    { timeout: 30_000, signal },
   )
-  return {
-    result: res.choices[0]?.message?.content ?? '',
-    processingTime: Date.now() - start,
-    tokensUsed: res.usage ? { input: res.usage.prompt_tokens ?? 0, output: res.usage.completion_tokens ?? 0 } : undefined,
+  let out = ''
+  let first: number | null = null
+  let usage: Usage | undefined
+  let model = MODEL
+  for await (const chunk of stream) {
+    const c = chunk as { model?: string; usage?: Usage; x_groq?: { usage?: Usage }; choices?: { delta?: { content?: string | null } }[] }
+    if (c.model) model = c.model
+    const delta = c.choices?.[0]?.delta?.content
+    if (delta) {
+      if (first === null) first = Date.now()
+      out += delta
+      onDelta(delta)
+    }
+    usage = c.usage ?? c.x_groq?.usage ?? usage
   }
+  return toOutput(out, buildTrace(start, first, usage, model))
+}
+
+/** Non-streaming variant, kept for scripts and simple callers. */
+export async function runStep(type: StepType, text: string, params: Params): Promise<StepOutput> {
+  const start = Date.now()
+  const res = await groq().chat.completions.create(request(type, text, params), { timeout: 30_000 })
+  return toOutput(res.choices[0]?.message?.content ?? '', buildTrace(start, null, res.usage as Usage | undefined, res.model))
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,6 +21,7 @@ import { useAuth } from '@/lib/auth-provider'
 import { TemplateGallery } from '@/components/workflow/template-gallery'
 import { Save, FolderOpen, Trash2, X, KeyRound, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { LiveRun, type LiveRunState } from '@/components/results/live-run'
 
 export default function BuilderPage() {
   const router = useRouter()
@@ -35,6 +36,8 @@ export default function BuilderPage() {
   const [loadingTemplates, setLoadingTemplates] = useState(true)
   const [templateSlug, setTemplateSlug] = useState<string | null>(null)
   const [aiReady, setAiReady] = useState<boolean | null>(null)
+  const [live, setLive] = useState<LiveRunState | null>(null)
+  const liveRef = useRef<HTMLDivElement>(null)
   const { user, isLoading: authLoading } = useAuth()
   const isGuest = !authLoading && !user
 
@@ -175,22 +178,55 @@ export default function BuilderPage() {
     }
 
     setIsRunning(true)
+    const patch = (i: number, f: (st: LiveRunState['steps'][number]) => LiveRunState['steps'][number]) =>
+      setLive((l) => (l ? { ...l, steps: l.steps.map((st, j) => (j === i ? f(st) : st)) } : l))
+    setLive({
+      runId: null,
+      startedAt: Date.now(),
+      finishedAt: null,
+      status: 'connecting',
+      steps: workflow.steps.map((st) => ({ id: st.id, type: st.type, status: 'pending', output: '' })),
+    })
+    requestAnimationFrame(() => liveRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
     try {
-      const response = await workflowApi.run(workflow, workflow.input, templateSlug)
+      const response = await workflowApi.runStream(workflow, workflow.input, templateSlug, {
+        onRun: (e) =>
+          setLive((l) =>
+            l && {
+              ...l,
+              runId: e.runId,
+              status: 'running',
+              steps: e.steps.map((st) => ({ id: st.id, type: st.type, status: 'pending', output: '' })),
+            },
+          ),
+        onStepStart: (e) => patch(e.index, (st) => ({ ...st, status: 'running' })),
+        onDelta: (e) => patch(e.index, (st) => ({ ...st, output: st.output + e.text })),
+        onStepEnd: (e) =>
+          patch(e.index, (st) => ({
+            ...st,
+            status: e.result.status,
+            output: e.result.output || st.output,
+            error: e.result.error,
+            trace: e.result.trace,
+          })),
+      })
+      const ok = response.results.status === 'completed'
+      setLive((l) => l && { ...l, runId: response.runId, status: ok ? 'completed' : 'failed', finishedAt: Date.now() })
       const run: WorkflowRun = {
         id: response.runId,
         workflowId: workflow.id,
         input: response.results.initialInput,
-        status: response.results.status === 'completed' ? 'completed' : 'failed',
+        status: ok ? 'completed' : 'failed',
         results: response.results,
         createdAt: new Date().toISOString(),
       }
       addRun(run)
-      toast.success('Workflow executed successfully')
-      router.push(`/results/${response.runId}`)
+      if (ok) toast.success('Workflow finished')
+      else toast.error('A step failed. See the run below.')
     } catch (error) {
       if (error instanceof ApiError && error.code === 'AI_KEY_MISSING') setAiReady(false)
       const message = error instanceof Error ? error.message : 'Failed to run workflow'
+      setLive((l) => l && { ...l, status: 'failed', finishedAt: Date.now(), error: message })
       toast.error(message)
     } finally {
       setIsRunning(false)
@@ -362,6 +398,12 @@ export default function BuilderPage() {
                 'Run Workflow'
               )}
             </Button>
+
+            {live && (
+              <div ref={liveRef} className="scroll-mt-24">
+                <LiveRun state={live} />
+              </div>
+            )}
           </div>
 
           <div>

@@ -14,3 +14,5 @@ node_modules/
 .vercel
 .env*
 tsconfig.tsbuildinfo
+
+!.env.example

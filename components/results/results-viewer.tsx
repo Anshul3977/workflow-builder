@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { StepResultCard } from './step-result-card'
+import { TraceWaterfall } from './trace'
 import type { WorkflowRun } from '@/types/results'
 import { format } from 'date-fns'
 
@@ -26,6 +27,9 @@ export function ResultsViewer({ run }: ResultsViewerProps) {
   const totalTokens = steps.reduce((sum, step) => {
     return sum + (step.tokensUsed ? step.tokensUsed.input + step.tokensUsed.output : 0)
   }, 0)
+  const tokensIn = steps.reduce((n, s) => n + (s.tokensUsed?.input ?? 0), 0)
+  const model = run.results?.totals?.model ?? steps.find((s) => s.trace)?.trace?.model
+  const hasTrace = steps.some((s) => s.trace)
 
   // Use input text as run name, fallback to "Untitled Workflow"
   const runName = run.input?.slice(0, 60) || 'Untitled Workflow'
@@ -51,13 +55,31 @@ export function ResultsViewer({ run }: ResultsViewerProps) {
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Tokens Used</h3>
             <p className="text-lg font-semibold">{totalTokens.toLocaleString()}</p>
+            {totalTokens > 0 && (
+              <p className="text-xs text-muted-foreground font-mono">
+                {tokensIn.toLocaleString()} in · {(totalTokens - tokensIn).toLocaleString()} out
+              </p>
+            )}
           </div>
-          <div className="md:col-span-2">
+          {model && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Model</h3>
+              <p className="text-base font-mono">{model}</p>
+            </div>
+          )}
+          <div className={model ? '' : 'md:col-span-2'}>
             <h3 className="text-sm font-medium text-muted-foreground">Completed At</h3>
             <p className="text-base">{formatDate(run.completedAt) || formatDate(run.createdAt) || 'Just now'}</p>
           </div>
         </div>
       </Card>
+
+      {hasTrace && (
+        <Card className="p-5 md:p-6">
+          <h2 className="text-sm font-medium mb-4">Trace</h2>
+          <TraceWaterfall steps={steps} />
+        </Card>
+      )}
 
       {steps.length > 0 && (
         <div>

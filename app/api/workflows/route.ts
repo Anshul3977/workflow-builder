@@ -1,7 +1,9 @@
 import { z } from 'zod'
 import { sql } from '@/lib/server/db'
 import { getUser, json, unauthorized } from '@/lib/server/session'
-import { execute, StepSchema, type Step } from '@/lib/server/runner'
+import { execute, StepSchema, type Step, type RunEvent } from '@/lib/server/runner'
+import { saveStepTrace, finishRun, failRun } from '@/lib/server/traces'
+import { encodeSse } from '@/lib/sse'
 import { AiKeyMissingError, hasAiKey } from '@/lib/server/llm'
 import { clientHash, runsLeft, DEMO_RUNS_PER_HOUR, USER_RUNS_PER_HOUR } from '@/lib/server/limits'
 
@@ -15,8 +17,10 @@ const RunSchema = z.object({
   templateSlug: z.string().max(100).optional(),
 })
 
-// POST /api/workflows: run a workflow. Signed-in users run any steps; guests run a seeded template.
-export async function POST(req: Request) {
+type Prepared = { runId: string; steps: Step[]; input: string; demo: boolean }
+
+/** Validates, applies demo/user rate limits, resolves template steps and creates the run row. */
+async function prepare(req: Request): Promise<Prepared | Response> {
   const parsed = RunSchema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return json({ success: false, error: 'Invalid request', details: parsed.error.issues }, 400)
   const body = parsed.data
@@ -54,16 +58,74 @@ export async function POST(req: Request) {
     INSERT INTO workflow_runs (workflow_id, template_slug, user_id, is_demo, client_hash, input_text, status)
     VALUES (${workflowId}, ${body.templateSlug ?? null}, ${user?.id ?? null}, ${!user}, ${client}, ${body.input}, 'running')
     RETURNING id`
-  try {
-    const result = await execute(run.id as string, steps, body.input)
-    await db`UPDATE workflow_runs SET status = ${result.status}, results = ${JSON.stringify(result)}::jsonb,
-      total_processing_time = ${result.totalProcessingTime}, completed_at = now() WHERE id = ${run.id}`
-    return json({ success: true, runId: run.id, demo: !user, results: result })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Run failed'
-    await db`UPDATE workflow_runs SET status = 'failed', error_message = ${message}, completed_at = now() WHERE id = ${run.id}`
-    return json({ success: false, error: message }, 500)
+  return { runId: run.id as string, steps, input: body.input, demo: !user }
+}
+
+/** Runs the steps, saving a trace row as each step finishes. */
+async function run(p: Prepared, emit: (e: RunEvent) => void = () => {}) {
+  const traceWrites: Promise<unknown>[] = []
+  const result = await execute(p.runId, p.steps, p.input, (e) => {
+    if (e.type === 'step-end') traceWrites.push(saveStepTrace(p.runId, e.index, e.result).catch(() => {}))
+    emit(e)
+  })
+  await Promise.all(traceWrites)
+  await finishRun(p.runId, result)
+  return result
+}
+
+const wantsStream = (req: Request) =>
+  (req.headers.get('accept') ?? '').includes('text/event-stream') || new URL(req.url).searchParams.get('stream') === '1'
+
+// POST /api/workflows: run a workflow. Signed-in users run any steps; guests run a seeded template.
+// With `Accept: text/event-stream` the response is an SSE stream: run, step-start, delta, step-end, done | error.
+export async function POST(req: Request) {
+  const p = await prepare(req)
+  if (p instanceof Response) return p
+
+  if (!wantsStream(req)) {
+    try {
+      const result = await run(p)
+      return json({ success: true, runId: p.runId, demo: p.demo, results: result })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Run failed'
+      await failRun(p.runId, message)
+      return json({ success: false, error: message }, 500)
+    }
   }
+
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let open = true
+      const send = (event: string, data: unknown) => {
+        if (!open) return
+        try {
+          controller.enqueue(encoder.encode(encodeSse(event, data)))
+        } catch {
+          open = false // client went away; keep running so the run is still saved
+        }
+      }
+      send('run', { runId: p.runId, demo: p.demo, steps: p.steps.map((s) => ({ id: s.id, type: s.type })) })
+      try {
+        const result = await run(p, (e) => send(e.type, e))
+        send('done', { runId: p.runId, demo: p.demo, results: result })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Run failed'
+        await failRun(p.runId, message).catch(() => {})
+        send('error', { message, code: err instanceof AiKeyMissingError ? err.code : undefined })
+      } finally {
+        if (open) controller.close()
+      }
+    },
+  })
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    },
+  })
 }
 
 // GET /api/workflows: the signed-in user's run history.

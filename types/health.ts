@@ -15,4 +15,5 @@ export interface HealthMetrics {
   requestsProcessed: number
   averageResponseTime: number
   runs24h?: number
+  traces?: { steps24h: number; p50StepMs: number; p50TtftMs: number; tokens24h: number }
 }

@@ -1,10 +1,10 @@
 import type {
-  RunWorkflowResponse,
   HistoryResponse,
   HealthResponse,
 } from '@/types/api'
 import type { Workflow, WorkflowStep } from '@/types/workflow'
-import type { WorkflowRun } from '@/types/results'
+import type { WorkflowRun, ExecutionResult, StepResult } from '@/types/results'
+import { createSseParser } from '@/lib/sse'
 
 // Same-origin API routes (Next.js on Vercel). Auth travels as an httpOnly cookie.
 const API_BASE = '/api'
@@ -38,6 +38,43 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return response.json()
 }
 
+type DbTrace = {
+  step_index: number
+  model: string | null
+  latency_ms: number
+  ttft_ms: number | null
+  provider_ms: number | null
+  input_tokens: number
+  output_tokens: number
+  reasoning_tokens: number
+  started_at: string | null
+}
+
+// Older runs stored no trace in their JSON; fill it from the trace table when present.
+function withTraces(results: WorkflowRun['results'], traces?: DbTrace[]): WorkflowRun['results'] {
+  if (!results || !traces?.length) return results
+  return {
+    ...results,
+    steps: results.steps.map((s, i) => {
+      const t = traces.find((x) => x.step_index === i)
+      if (s.trace || !t) return s
+      return {
+        ...s,
+        trace: {
+          model: t.model ?? '',
+          latencyMs: t.latency_ms,
+          ttftMs: t.ttft_ms,
+          providerMs: t.provider_ms,
+          inputTokens: t.input_tokens,
+          outputTokens: t.output_tokens,
+          reasoningTokens: t.reasoning_tokens,
+          startedAt: t.started_at ?? '',
+        },
+      }
+    }),
+  }
+}
+
 // Maps a DB record (snake_case) to the frontend WorkflowRun (camelCase)
 function mapDbRunToWorkflowRun(dbRun: Record<string, unknown>): WorkflowRun {
   return {
@@ -45,24 +82,65 @@ function mapDbRunToWorkflowRun(dbRun: Record<string, unknown>): WorkflowRun {
     workflowId: (dbRun.workflow_id as string) || undefined,
     input: (dbRun.input_text as string) || '',
     status: dbRun.status as WorkflowRun['status'],
-    results: dbRun.results as WorkflowRun['results'],
+    results: withTraces(dbRun.results as WorkflowRun['results'], dbRun.traces as DbTrace[] | undefined),
     createdAt: dbRun.created_at as string,
     completedAt: (dbRun.completed_at as string) || undefined,
   }
 }
 
+export interface RunStreamHandlers {
+  onRun?: (e: { runId: string; demo: boolean; steps: { id: string; type: string }[] }) => void
+  onStepStart?: (e: { index: number; stepId: string; stepType: string }) => void
+  onDelta?: (e: { index: number; text: string }) => void
+  onStepEnd?: (e: { index: number; result: StepResult }) => void
+}
+
 export const workflowApi = {
-  async run(workflow: Workflow, input: string, templateSlug?: string | null): Promise<RunWorkflowResponse> {
-    const payload = {
-      steps: workflow.steps,
-      input,
-      templateSlug: templateSlug || undefined,
+  /** Runs a workflow and streams step output as it is generated (SSE over a POST response). */
+  async runStream(
+    workflow: Workflow,
+    input: string,
+    templateSlug: string | null | undefined,
+    handlers: RunStreamHandlers,
+    signal?: AbortSignal,
+  ): Promise<{ runId: string; demo: boolean; results: ExecutionResult }> {
+    let response: Response
+    try {
+      response = await fetch(`${API_BASE}/workflows`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ steps: workflow.steps, input, templateSlug: templateSlug || undefined }),
+        signal,
+      })
+    } catch {
+      throw new ApiError('Network error. Check your connection and try again.')
     }
-    return fetchApi<RunWorkflowResponse>('/workflows', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
+    if (!response.ok || !response.body) {
+      const data = await response.json().catch(() => ({}))
+      throw new ApiError(data.error || `Request failed (${response.status})`, response.status, data.code)
+    }
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
+    const feed = createSseParser()
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      for (const m of feed(value)) {
+        const d = m.data as never
+        if (m.event === 'run') handlers.onRun?.(d)
+        else if (m.event === 'step-start') handlers.onStepStart?.(d)
+        else if (m.event === 'delta') handlers.onDelta?.(d)
+        else if (m.event === 'step-end') handlers.onStepEnd?.(d)
+        else if (m.event === 'done') return d
+        else if (m.event === 'error') {
+          const e = m.data as { message?: string; code?: string }
+          throw new ApiError(e.message || 'Run failed', 500, e.code)
+        }
+      }
+    }
+    throw new ApiError('The connection closed before the run finished. Check History for the saved result.')
   },
+
 
   async getHistory(limit = 50, offset = 0): Promise<{ runs: WorkflowRun[]; total: number }> {
     const response = await fetchApi<HistoryResponse>(

@@ -113,6 +113,25 @@ export default function StatusPage() {
               <p className="text-2xl font-bold mt-1">{health.averageResponseTime ? `${(health.averageResponseTime / 1000).toFixed(1)} s` : '—'}</p>
             </Card>
           </div>
+
+          {health.traces && (
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Step traces (last 24 h)</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-5 lg:gap-6">
+                {[
+                  ['Steps run', health.traces.steps24h.toLocaleString()],
+                  ['Median step latency', health.traces.p50StepMs ? `${health.traces.p50StepMs} ms` : '—'],
+                  ['Median first token', health.traces.p50TtftMs ? `${health.traces.p50TtftMs} ms` : '—'],
+                  ['Tokens', health.traces.tokens24h.toLocaleString()],
+                ].map(([label, value]) => (
+                  <Card key={label} className="p-5 md:p-6">
+                    <p className="text-sm text-muted-foreground">{label}</p>
+                    <p className="text-2xl font-bold mt-1 tabular-nums">{value}</p>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
     </div>

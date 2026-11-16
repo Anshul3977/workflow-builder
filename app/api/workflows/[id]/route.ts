@@ -1,5 +1,6 @@
 import { sql } from '@/lib/server/db'
 import { getUser, json } from '@/lib/server/session'
+import { tracesFor } from '@/lib/server/traces'
 
 const UUID = /^[0-9a-f-]{36}$/i
 
@@ -12,5 +13,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     AND (is_demo OR user_id = ${user?.id ?? '__none__'})`
   if (!run) return json({ success: false, error: 'Run not found' }, 404)
   delete run.client_hash
-  return json({ success: true, data: run })
+  const traces = await tracesFor(id)
+  return json({ success: true, data: { ...run, traces } })
 }

@@ -44,3 +44,30 @@ CREATE TABLE IF NOT EXISTS workflow_templates (
 CREATE INDEX IF NOT EXISTS idx_workflows_user_id ON workflows(user_id);
 CREATE INDEX IF NOT EXISTS idx_runs_user_created ON workflow_runs(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_runs_demo_client ON workflow_runs(client_hash, created_at) WHERE is_demo;
+
+-- Per-step traces: one row per executed step, written when the step finishes.
+CREATE TABLE IF NOT EXISTS workflow_step_traces (
+  id BIGSERIAL PRIMARY KEY,
+  run_id UUID NOT NULL REFERENCES workflow_runs(id) ON DELETE CASCADE,
+  step_index INTEGER NOT NULL,
+  step_id TEXT NOT NULL,
+  step_type TEXT NOT NULL,
+  status VARCHAR(10) NOT NULL CHECK (status IN ('success', 'error')),
+  model TEXT,
+  latency_ms INTEGER NOT NULL,
+  ttft_ms INTEGER,                   -- time to first streamed token
+  provider_ms INTEGER,               -- Groq-reported generation time
+  input_tokens INTEGER NOT NULL DEFAULT 0,
+  output_tokens INTEGER NOT NULL DEFAULT 0,
+  reasoning_tokens INTEGER NOT NULL DEFAULT 0,
+  error TEXT,
+  started_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (run_id, step_index)
+);
+CREATE INDEX IF NOT EXISTS idx_traces_created ON workflow_step_traces(created_at DESC);
+
+-- Run-level rollups so history and stats don't need to unpack JSON.
+ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS model TEXT;
+ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS input_tokens INTEGER;
+ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS output_tokens INTEGER;

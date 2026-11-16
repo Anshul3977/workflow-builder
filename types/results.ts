@@ -1,3 +1,14 @@
+export interface StepTrace {
+  model: string
+  latencyMs: number
+  ttftMs: number | null
+  inputTokens: number
+  outputTokens: number
+  reasoningTokens: number
+  providerMs: number | null
+  startedAt: string
+}
+
 export interface StepResult {
   stepId: string
   stepType: string
@@ -10,6 +21,7 @@ export interface StepResult {
     input: number
     output: number
   }
+  trace?: StepTrace
 }
 
 export interface ExecutionResult {
@@ -18,6 +30,7 @@ export interface ExecutionResult {
   steps: StepResult[]
   totalProcessingTime: number
   status: 'completed' | 'failed'
+  totals?: { inputTokens: number; outputTokens: number; model: string | null }
 }
 
 export interface WorkflowRun {

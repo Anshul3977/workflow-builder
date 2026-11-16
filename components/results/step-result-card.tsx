@@ -6,19 +6,11 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import type { StepResult } from '@/types/results'
+import { STEP_LABELS as stepTypeLabels, TraceChips, ms } from './trace'
 
 interface StepResultCardProps {
   result: StepResult
   index?: number
-}
-
-const stepTypeLabels: Record<string, string> = {
-  clean: 'Clean Text',
-  summarize: 'Summarize Text',
-  extract: 'Extract Key Points',
-  categorize: 'Categorize',
-  sentiment: 'Sentiment Analysis',
-  translate: 'Translate',
 }
 
 export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
@@ -52,7 +44,8 @@ export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
                 {stepTypeLabels[result.stepType] || result.stepType}
               </p>
               <p className="text-sm text-muted-foreground">
-                {result.processingTime}ms • {totalTokens} tokens
+                {ms(result.trace?.latencyMs ?? result.processingTime)} • {totalTokens} tokens
+                {result.trace?.ttftMs != null && <> • first token {ms(result.trace.ttftMs)}</>}
               </p>
             </div>
             <Badge variant={isSuccess ? 'default' : 'destructive'}>
@@ -68,6 +61,7 @@ export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
 
       {isExpanded && (
         <div className="border-t bg-muted/30 px-5 py-5 md:px-6 space-y-5">
+          {result.trace && <TraceChips trace={result.trace} />}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-medium">Input</h4>

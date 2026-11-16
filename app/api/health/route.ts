@@ -15,6 +15,7 @@ export async function GET() {
     database = { ...database, status: 'unhealthy', message: err instanceof Error ? err.message : 'Connection failed' }
   }
   let stats = { runsTotal: 0, runs24h: 0, medianRunMs: 0 }
+  let traces = { steps24h: 0, p50StepMs: 0, p50TtftMs: 0, tokens24h: 0 }
   if (database.status === 'healthy') {
     try {
       const [r] = await sql()`SELECT count(*)::int AS total,
@@ -22,6 +23,14 @@ export async function GET() {
         coalesce(percentile_cont(0.5) WITHIN GROUP (ORDER BY total_processing_time) FILTER (WHERE status = 'completed'), 0)::int AS p50
         FROM workflow_runs`
       stats = { runsTotal: r.total, runs24h: r.day, medianRunMs: r.p50 }
+    } catch {}
+    try {
+      const [t] = await sql()`SELECT count(*)::int AS n,
+        coalesce(percentile_cont(0.5) WITHIN GROUP (ORDER BY latency_ms), 0)::int AS p50,
+        coalesce(percentile_cont(0.5) WITHIN GROUP (ORDER BY ttft_ms), 0)::int AS ttft,
+        coalesce(sum(input_tokens + output_tokens), 0)::int AS tokens
+        FROM workflow_step_traces WHERE created_at > now() - interval '24 hours' AND status = 'success'`
+      traces = { steps24h: t.n, p50StepMs: t.p50, p50TtftMs: t.ttft, tokens24h: t.tokens }
     } catch {}
   }
   const ai = hasAiKey()
@@ -36,6 +45,6 @@ export async function GET() {
   return Response.json({
     status: database.status === 'healthy' && ai ? 'healthy' : 'unhealthy',
     timestamp: now,
-    health: { backend, database, llm, uptime: 0, requestsProcessed: stats.runsTotal, averageResponseTime: stats.medianRunMs, runs24h: stats.runs24h },
+    health: { backend, database, llm, uptime: 0, requestsProcessed: stats.runsTotal, averageResponseTime: stats.medianRunMs, runs24h: stats.runs24h, traces },
   })
 }
