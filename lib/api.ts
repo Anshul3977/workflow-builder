@@ -1,56 +1,44 @@
 import type {
-  ApiResponse,
-  RunWorkflowRequest,
   RunWorkflowResponse,
   HistoryResponse,
   HealthResponse,
 } from '@/types/api'
-import type { Workflow } from '@/types/workflow'
+import type { Workflow, WorkflowStep } from '@/types/workflow'
 import type { WorkflowRun } from '@/types/results'
-import { supabase } from '@/lib/supabase'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+// Same-origin API routes (Next.js on Vercel). Auth travels as an httpOnly cookie.
+const API_BASE = '/api'
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data: { session } } = await supabase.auth.getSession()
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+    public readonly code?: string,
+  ) {
+    super(message)
+    this.name = 'ApiError'
   }
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`
-  }
-  return headers
 }
 
-async function fetchApi<T>(
-  endpoint: string,
-  options?: RequestInit,
-): Promise<T> {
-  const url = `${API_BASE}${endpoint}`
-  const authHeaders = await getAuthHeaders()
-
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  let response: Response
   try {
-    const response = await fetch(url, {
-      headers: {
-        ...authHeaders,
-        ...options?.headers,
-      },
+    response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      credentials: 'same-origin',
     })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.error || `API Error: ${response.status}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    throw new Error(`API request failed: ${message}`)
+  } catch {
+    throw new ApiError('Network error. Check your connection and try again.')
   }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new ApiError(data.error || `Request failed (${response.status})`, response.status, data.code)
+  }
+  return response.json()
 }
 
-// Maps a Supabase DB record (snake_case) to the frontend WorkflowRun (camelCase)
+// Maps a DB record (snake_case) to the frontend WorkflowRun (camelCase)
 function mapDbRunToWorkflowRun(dbRun: Record<string, unknown>): WorkflowRun {
   return {
     id: dbRun.id as string,
@@ -64,11 +52,11 @@ function mapDbRunToWorkflowRun(dbRun: Record<string, unknown>): WorkflowRun {
 }
 
 export const workflowApi = {
-  async run(workflow: Workflow, input: string): Promise<RunWorkflowResponse> {
+  async run(workflow: Workflow, input: string, templateSlug?: string | null): Promise<RunWorkflowResponse> {
     const payload = {
       steps: workflow.steps,
       input,
-      workflowId: workflow.id,
+      templateSlug: templateSlug || undefined,
     }
     return fetchApi<RunWorkflowResponse>('/workflows', {
       method: 'POST',
@@ -104,10 +92,6 @@ export const healthApi = {
   async getStatus(): Promise<HealthResponse> {
     return fetchApi<HealthResponse>('/health')
   },
-
-  async checkService(service: string): Promise<ApiResponse<unknown>> {
-    return fetchApi<ApiResponse<unknown>>(`/health/${service}`)
-  },
 }
 
 export interface SavedWorkflow {
@@ -139,12 +123,18 @@ export const savedWorkflowApi = {
   },
 }
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status?: number,
-  ) {
-    super(message)
-    this.name = 'ApiError'
-  }
+export interface WorkflowTemplate {
+  slug: string
+  name: string
+  description: string | null
+  category: string | null
+  steps: WorkflowStep[]
+  sample_input: string
+}
+
+export const templateApi = {
+  async list(): Promise<WorkflowTemplate[]> {
+    const response = await fetchApi<{ success: boolean; data: WorkflowTemplate[] }>('/templates')
+    return response.data || []
+  },
 }

@@ -1,4 +1,4 @@
-export type StepType = 'summarize' | 'extract' | 'categorize' | 'sentiment' | 'translate'
+export type StepType = 'clean' | 'summarize' | 'extract' | 'categorize' | 'sentiment' | 'translate'
 
 export interface StepConfig {
   type: StepType

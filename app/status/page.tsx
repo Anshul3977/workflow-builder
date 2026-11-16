@@ -101,16 +101,16 @@ export default function StatusPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
             <Card className="p-5 md:p-6">
-              <p className="text-sm text-muted-foreground">Uptime</p>
-              <p className="text-2xl font-bold mt-1">{health.uptime.toFixed(2)}%</p>
+              <p className="text-sm text-muted-foreground">Runs (last 24 h)</p>
+              <p className="text-2xl font-bold mt-1">{(health.runs24h ?? 0).toLocaleString()}</p>
             </Card>
             <Card className="p-5 md:p-6">
-              <p className="text-sm text-muted-foreground">Requests Processed</p>
+              <p className="text-sm text-muted-foreground">Runs (all time)</p>
               <p className="text-2xl font-bold mt-1">{health.requestsProcessed.toLocaleString()}</p>
             </Card>
             <Card className="p-5 md:p-6">
-              <p className="text-sm text-muted-foreground">Avg Response Time</p>
-              <p className="text-2xl font-bold mt-1">{health.averageResponseTime.toFixed(0)}ms</p>
+              <p className="text-sm text-muted-foreground">Median run time</p>
+              <p className="text-2xl font-bold mt-1">{health.averageResponseTime ? `${(health.averageResponseTime / 1000).toFixed(1)} s` : '—'}</p>
             </Card>
           </div>
         </div>

@@ -14,4 +14,5 @@ export interface HealthMetrics {
   uptime: number
   requestsProcessed: number
   averageResponseTime: number
+  runs24h?: number
 }

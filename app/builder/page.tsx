@@ -12,13 +12,15 @@ import { StepConfigModal } from '@/components/workflow/step-config-modal'
 import { useWorkflowStore } from '@/lib/stores/workflow-store'
 import { useUIStore } from '@/lib/stores/ui-store'
 import { useHistoryStore } from '@/lib/stores/history-store'
-import { workflowApi, savedWorkflowApi } from '@/lib/api'
-import type { SavedWorkflow } from '@/lib/api'
+import { workflowApi, savedWorkflowApi, templateApi, healthApi, ApiError } from '@/lib/api'
+import type { SavedWorkflow, WorkflowTemplate } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import type { WorkflowRun } from '@/types/results'
 import type { WorkflowStep } from '@/types/workflow'
-import { AuthGuard } from '@/components/auth/auth-guard'
-import { Save, FolderOpen, Trash2, X } from 'lucide-react'
+import { useAuth } from '@/lib/auth-provider'
+import { TemplateGallery } from '@/components/workflow/template-gallery'
+import { Save, FolderOpen, Trash2, X, KeyRound, Sparkles } from 'lucide-react'
+import Link from 'next/link'
 
 export default function BuilderPage() {
   const router = useRouter()
@@ -29,6 +31,12 @@ export default function BuilderPage() {
   const [savedWorkflows, setSavedWorkflows] = useState<SavedWorkflow[]>([])
   const [showSavedList, setShowSavedList] = useState(false)
   const [loadingSaved, setLoadingSaved] = useState(false)
+  const [templates, setTemplates] = useState<WorkflowTemplate[]>([])
+  const [loadingTemplates, setLoadingTemplates] = useState(true)
+  const [templateSlug, setTemplateSlug] = useState<string | null>(null)
+  const [aiReady, setAiReady] = useState<boolean | null>(null)
+  const { user, isLoading: authLoading } = useAuth()
+  const isGuest = !authLoading && !user
 
   const workflow = useWorkflowStore((state) => state.workflow)
   const setWorkflow = useWorkflowStore((state) => state.setWorkflow)
@@ -47,7 +55,42 @@ export default function BuilderPage() {
 
   const selectedStep = workflow.steps.find((s) => s.id === selectedStepId) || null
 
+  const applyTemplate = useCallback(
+    (t: WorkflowTemplate) => {
+      setWorkflow({
+        ...useWorkflowStore.getState().workflow,
+        name: t.name,
+        steps: t.steps.map((step, i) => ({ ...step, id: `${step.type}-${i}-${Date.now()}`, position: i })),
+        input: t.sample_input,
+      })
+      setTemplateSlug(t.slug)
+    },
+    [setWorkflow],
+  )
+
+  useEffect(() => {
+    templateApi
+      .list()
+      .then((list) => {
+        setTemplates(list)
+        const wanted = new URLSearchParams(window.location.search).get('template')
+        const match = list.find((t) => t.slug === wanted)
+        if (match) applyTemplate(match)
+      })
+      .catch(() => toast.error('Could not load templates'))
+      .finally(() => setLoadingTemplates(false))
+    healthApi
+      .getStatus()
+      .then((r) => setAiReady(r.health.llm.status === 'healthy'))
+      .catch(() => setAiReady(null))
+  }, [applyTemplate])
+
+  // Editing steps by hand turns a template into a custom workflow.
+  const editAddStep: typeof addStep = (type) => { setTemplateSlug(null); addStep(type) }
+  const editRemoveStep: typeof removeStep = (id) => { setTemplateSlug(null); removeStep(id) }
+
   const fetchSavedWorkflows = useCallback(async () => {
+    if (!user) return
     try {
       setLoadingSaved(true)
       const workflows = await savedWorkflowApi.list()
@@ -57,13 +100,18 @@ export default function BuilderPage() {
     } finally {
       setLoadingSaved(false)
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     fetchSavedWorkflows()
   }, [fetchSavedWorkflows])
 
   const handleSaveWorkflow = async () => {
+    if (!user) {
+      toast.error('Log in to save workflows')
+      router.push('/login')
+      return
+    }
     if (!workflowName.trim()) {
       toast.error('Please enter a workflow name')
       return
@@ -121,9 +169,14 @@ export default function BuilderPage() {
       return
     }
 
+    if (isGuest && !templateSlug) {
+      toast.error('Pick a template to try it without an account, or log in to run your own steps.')
+      return
+    }
+
     setIsRunning(true)
     try {
-      const response = await workflowApi.run(workflow, workflow.input)
+      const response = await workflowApi.run(workflow, workflow.input, templateSlug)
       const run: WorkflowRun = {
         id: response.runId,
         workflowId: workflow.id,
@@ -136,6 +189,7 @@ export default function BuilderPage() {
       toast.success('Workflow executed successfully')
       router.push(`/results/${response.runId}`)
     } catch (error) {
+      if (error instanceof ApiError && error.code === 'AI_KEY_MISSING') setAiReady(false)
       const message = error instanceof Error ? error.message : 'Failed to run workflow'
       toast.error(message)
     } finally {
@@ -144,8 +198,32 @@ export default function BuilderPage() {
   }
 
   return (
-    <AuthGuard>
       <div className="space-y-10">
+        {aiReady === false && (
+          <Card className="flex items-start gap-3 p-4 border-amber-500/40 bg-amber-500/5">
+            <KeyRound className="h-5 w-5 mt-0.5 text-amber-600 shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium">AI key needed</p>
+              <p className="text-muted-foreground">
+                This deployment doesn&apos;t have its Groq API key yet, so runs are paused. You can still browse templates, build and save workflows.
+              </p>
+            </div>
+          </Card>
+        )}
+
+        {isGuest && (
+          <Card className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-muted/40">
+            <Sparkles className="h-5 w-5 text-primary shrink-0" />
+            <p className="text-sm flex-1">
+              <span className="font-medium">Demo mode.</span> Pick a template below and run it without an account (5 runs per hour). Log in to build your own steps and save them.
+            </p>
+            <div className="flex gap-2">
+              <Link href="/login"><Button size="sm" variant="outline">Log in</Button></Link>
+              <Link href="/signup"><Button size="sm">Sign up</Button></Link>
+            </div>
+          </Card>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Workflow Builder</h1>
@@ -157,6 +235,7 @@ export default function BuilderPage() {
             <Button
               variant="outline"
               size="sm"
+              disabled={!user}
               onClick={() => { setShowSavedList(!showSavedList); if (!showSavedList) fetchSavedWorkflows() }}
             >
               <FolderOpen className="h-4 w-4 mr-2" />
@@ -240,6 +319,14 @@ export default function BuilderPage() {
           </Card>
         )}
 
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Start from a template</h2>
+            <p className="text-sm text-muted-foreground">Each one fills in the steps and a sample input you can edit.</p>
+          </div>
+          <TemplateGallery templates={templates} isLoading={loadingTemplates} activeSlug={templateSlug} onSelect={applyTemplate} />
+        </section>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
           <div className="lg:col-span-2 space-y-6">
             <div className="space-y-2">
@@ -260,7 +347,7 @@ export default function BuilderPage() {
 
             <Button
               onClick={handleRunWorkflow}
-              disabled={isRunning || workflow.steps.length === 0 || !workflow.input.trim()}
+              disabled={isRunning || workflow.steps.length === 0 || !workflow.input.trim() || aiReady === false || (isGuest && !templateSlug)}
               className="w-full"
               size="lg"
             >
@@ -269,6 +356,8 @@ export default function BuilderPage() {
                   <Spinner className="mr-2 h-4 w-4" />
                   Running Workflow...
                 </>
+              ) : isGuest && !templateSlug ? (
+                'Pick a template to run without an account'
               ) : (
                 'Run Workflow'
               )}
@@ -278,8 +367,8 @@ export default function BuilderPage() {
           <div>
             <WorkflowPipeline
               workflow={workflow}
-              onAddStep={addStep}
-              onRemoveStep={removeStep}
+              onAddStep={(type) => (isGuest ? toast.info('Log in to add your own steps') : editAddStep(type))}
+              onRemoveStep={(id) => (isGuest ? toast.info('Log in to edit steps') : editRemoveStep(id))}
               onConfigureStep={openStepConfigModal}
             />
           </div>
@@ -292,6 +381,7 @@ export default function BuilderPage() {
           onUpdate={(stepId, parameters) => {
             const step = workflow.steps.find((s) => s.id === stepId)
             if (step) {
+              setTemplateSlug(null)
               updateStep(stepId, {
                 type: step.type,
                 parameters,
@@ -300,6 +390,5 @@ export default function BuilderPage() {
           }}
         />
       </div>
-    </AuthGuard>
   )
 }

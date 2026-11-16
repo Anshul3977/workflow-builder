@@ -12,12 +12,12 @@ const _geistMono = Geist_Mono({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Workflow Builder',
-  description: 'Build and run multi-step text processing workflows',
+  description: 'Chain LLM text steps into a pipeline, run it, and inspect every step. Try templates without an account.',
   generator: 'v0.app',
-  metadataBase: new URL('http://localhost:3000'),
+  metadataBase: new URL('https://workflow-builder-umber.vercel.app'),
   openGraph: {
     title: 'Workflow Builder',
-    description: 'Build and run multi-step text processing workflows',
+    description: 'Chain LLM text steps into a pipeline, run it, and inspect every step. Try templates without an account.',
     type: 'website',
   },
 }

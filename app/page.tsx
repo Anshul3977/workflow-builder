@@ -6,13 +6,22 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { HealthIndicator } from '@/components/health/health-indicator'
 import { useHealthStore } from '@/lib/stores/health-store'
-import { healthApi } from '@/lib/api'
+import { healthApi, templateApi, type WorkflowTemplate } from '@/lib/api'
+import { TemplateGallery } from '@/components/workflow/template-gallery'
+import { useRouter } from 'next/navigation'
 import { ArrowRight, Zap, Settings, History } from 'lucide-react'
 
 export default function HomePage() {
   const [isLoadingHealth, setIsLoadingHealth] = useState(true)
   const health = useHealthStore((state) => state.health)
   const setHealth = useHealthStore((state) => state.setHealth)
+  const [templates, setTemplates] = useState<WorkflowTemplate[]>([])
+  const [loadingTemplates, setLoadingTemplates] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    templateApi.list().then(setTemplates).catch(() => {}).finally(() => setLoadingTemplates(false))
+  }, [])
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -58,14 +67,14 @@ export default function HomePage() {
           Workflow Builder
         </h1>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Build and run multi-step text processing pipelines with ease.
-          Combine summarization, extraction, categorization, and more.
+          Chain LLM steps like clean, summarize, extract, categorize, translate and sentiment
+          into one pipeline, run it, and see what every step did.
         </p>
 
         <div className="flex items-center justify-center gap-4 pt-2">
           <Link href="/builder">
             <Button size="lg" className="gap-2 px-8 h-12 text-base">
-              Get Started <ArrowRight className="h-5 w-5" />
+              Open the builder <ArrowRight className="h-5 w-5" />
             </Button>
           </Link>
           <Link href="/history">
@@ -75,6 +84,20 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Templates: runnable without an account */}
+      <section className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-bold">Try a template</h2>
+          <p className="text-muted-foreground mt-1">No account needed. Pick one, edit the sample text if you like, and run it.</p>
+        </div>
+        <TemplateGallery
+          templates={templates}
+          isLoading={loadingTemplates}
+          actionLabel="Try it"
+          onSelect={(t) => router.push(`/builder?template=${t.slug}`)}
+        />
+      </section>
 
       {/* Feature Cards — 3 equal columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">

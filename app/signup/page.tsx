@@ -39,8 +39,8 @@ export default function SignupPage() {
             return
         }
 
-        if (password.length < 6) {
-            toast.error('Password must be at least 6 characters')
+        if (password.length < 8) {
+            toast.error('Password must be at least 8 characters')
             return
         }
 
@@ -51,8 +51,8 @@ export default function SignupPage() {
         if (error) {
             toast.error(error)
         } else {
-            toast.success('Account created! You can now sign in.')
-            router.push('/login')
+            toast.success('Account created. You are signed in.')
+            router.push('/builder')
         }
     }
 

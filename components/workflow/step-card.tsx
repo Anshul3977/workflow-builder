@@ -12,6 +12,7 @@ interface StepCardProps {
 }
 
 const stepTypeLabels: Record<string, string> = {
+  clean: 'Clean Text',
   summarize: 'Summarize Text',
   extract: 'Extract Key Points',
   categorize: 'Categorize',
@@ -20,6 +21,7 @@ const stepTypeLabels: Record<string, string> = {
 }
 
 const stepTypeColors: Record<string, string> = {
+  clean: 'bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100',
   summarize: 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100',
   extract: 'bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100',
   categorize: 'bg-pink-100 text-pink-900 dark:bg-pink-900 dark:text-pink-100',

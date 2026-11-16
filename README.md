@@ -1,192 +1,47 @@
 # Workflow Builder
 
-A powerful, extensible platform for building and executing multi-step text processing workflows. Combine different operations like summarization, extraction, categorization, translation, and sentiment analysis to create sophisticated data pipelines.
+Chain LLM text steps (clean, summarize, extract, categorize, translate, sentiment) into one pipeline, run it, and see the input, output, time and tokens of every step.
 
-## Features
+**Live:** https://workflow-builder-umber.vercel.app. Templates run without an account (demo mode, 5 runs per hour per visitor). Sign up to build your own steps, save workflows and keep a run history.
 
-- **Visual Workflow Builder**: Drag-and-drop interface for creating multi-step processing pipelines
-- **Step Types**: Supports multiple operation types:
-  - Summarization: Condense text to key points
-  - Extraction: Pull specific information from text
-  - Categorization: Classify text into predefined categories
-  - Translation: Convert text between languages
-  - Sentiment Analysis: Analyze emotional tone of text
-  
-- **Workflow Execution**: Run workflows with real-time result tracking
-- **Execution History**: Track all workflow runs with detailed results and performance metrics
-- **Health Status**: Monitor backend service health and availability
-- **State Management**: Uses Zustand for efficient client-side state management
-- **Responsive Design**: Beautiful, mobile-friendly interface built with Tailwind CSS
+## How it works
 
-## Architecture
+- **App and API in one Next.js 16 project on Vercel.** Route handlers under `app/api/*` replace the old Express server.
+- **Neon Postgres** (Singapore, free plan) through `@neondatabase/serverless`. Schema: `scripts/schema.sql`.
+- **Neon Auth** (managed Better Auth) for email and password login. Sessions are httpOnly cookies, so the API reads the user on the server.
+- **Groq** (`llama-4-scout-17b`) runs each step. A step's output becomes the next step's input, and a run stops at the first failing step.
+- **Demo mode:** guests can only run seeded templates (steps come from the database, not the client), with input capped at 2,000 characters and 5 runs per hour per salted IP hash. Signed-in users get 30 runs per hour.
 
-### Frontend Structure
-- **Pages**: Home, Builder, History, Status, Results (dynamic)
-- **Components**: Organized by feature (workflow, health, history, results, layout)
-- **State Management**: Zustand stores for workflows, history, health, and UI state
-- **API Layer**: Typed API utilities for consistent backend communication
+| Route | What it does |
+| --- | --- |
+| `GET /api/health` | Database ping, AI key check, run stats |
+| `GET /api/templates` | Public templates |
+| `POST /api/workflows` | Run steps (signed in) or a template (anyone) |
+| `GET /api/workflows` · `DELETE /api/workflows/clear` | Your run history |
+| `GET /api/workflows/:id` | One run (yours, or any demo run) |
+| `GET/POST /api/saved-workflows` · `GET/DELETE /api/saved-workflows/:id` | Saved workflows (signed in) |
+| `/api/auth/*` | Neon Auth |
 
-### Key Technologies
-- **Framework**: Next.js 16 with App Router
-- **State Management**: Zustand
-- **UI Framework**: React 19 with shadcn/ui components
-- **Styling**: Tailwind CSS with custom theme tokens
-- **Toast Notifications**: Sonner
-- **Type Safety**: TypeScript
+## Run locally
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ and pnpm
-
-### Installation
-
-1. Install dependencies:
 ```bash
 pnpm install
-```
-
-2. Set up environment variables:
-Create a `.env.local` file with:
-```
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-```
-
-3. Start the development server:
-```bash
+vercel env pull .env.local          # DATABASE_URL, NEON_AUTH_BASE_URL, NEON_AUTH_COOKIE_SECRET, GROQ_API_KEY
+node --env-file=.env.local scripts/migrate.mjs   # creates tables and seeds templates (safe to re-run)
 pnpm dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+Without `GROQ_API_KEY` the app still works for browsing, login and saving; runs show an "AI key needed" notice.
 
-## Project Structure
+## Environment
 
-```
-├── app/                          # Next.js app router pages
-│   ├── layout.tsx               # Root layout with theme provider
-│   ├── page.tsx                 # Home page
-│   ├── builder/                 # Workflow builder page
-│   ├── history/                 # Execution history page
-│   ├── status/                  # Health status page
-│   └── results/[id]/            # Dynamic results viewer
-│
-├── components/
-│   ├── ui/                      # shadcn/ui components
-│   ├── layout/                  # Header and main layout
-│   ├── workflow/                # Workflow builder components
-│   │   ├── step-card.tsx
-│   │   ├── step-type-selector.tsx
-│   │   ├── step-configurator.tsx
-│   │   ├── step-config-modal.tsx
-│   │   └── workflow-pipeline.tsx
-│   ├── health/                  # Health monitoring components
-│   ├── history/                 # History display components
-│   └── results/                 # Results viewing components
-│
-├── lib/
-│   ├── api.ts                   # API client functions
-│   └── stores/                  # Zustand store definitions
-│       ├── workflow-store.ts
-│       ├── history-store.ts
-│       ├── health-store.ts
-│       └── ui-store.ts
-│
-└── types/                        # TypeScript type definitions
-    ├── workflow.ts
-    ├── results.ts
-    ├── health.ts
-    └── api.ts
-```
+| Variable | Source |
+| --- | --- |
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED` | Added by the Neon integration on Vercel |
+| `NEON_AUTH_BASE_URL` | Added by the Neon integration |
+| `NEON_AUTH_COOKIE_SECRET` | Random 32+ character string |
+| `GROQ_API_KEY` | console.groq.com |
 
-## API Integration
+## History
 
-The application communicates with a backend API at `NEXT_PUBLIC_API_URL`. Expected endpoints:
-
-- `POST /execute` - Execute a workflow
-- `GET /results/:id` - Get execution results
-- `GET /history` - Get execution history
-- `GET /health` - Get system health status
-
-All API responses follow a consistent structure with status and data/error payloads.
-
-## State Management with Zustand
-
-### Workflow Store
-- Manages current workflow steps and configuration
-- Persists to localStorage automatically
-
-### History Store
-- Manages execution history
-- Tracks completed runs with timestamps and results
-
-### Health Store
-- Monitors backend, database, and LLM service health
-- Updates health status periodically
-
-### UI Store
-- Manages UI state (modals, selected steps, etc.)
-- Prevents prop-drilling across components
-
-## Styling
-
-The project uses Tailwind CSS with semantic design tokens defined in `app/globals.css`:
-- **Colors**: Primary, secondary, destructive, accent, muted
-- **Typography**: Controlled via font families and Tailwind classes
-- **Spacing**: Uses Tailwind's spacing scale
-- **Responsive**: Mobile-first approach with `md:` and `lg:` prefixes
-
-## Development Guidelines
-
-- **Components**: Keep components small and focused
-- **Types**: Always use TypeScript for type safety
-- **API**: Use the `lib/api.ts` utilities for all backend communication
-- **State**: Use Zustand stores instead of prop drilling
-- **Styling**: Use Tailwind classes, avoid inline styles
-
-## Performance Considerations
-
-- **State Management**: Zustand selectors prevent unnecessary re-renders
-- **Component Splitting**: UI is split into small, focused components
-- **API Caching**: Results are cached in history store
-- **Lazy Loading**: Pages load code on-demand
-
-## Building for Production
-
-```bash
-pnpm build
-pnpm start
-```
-
-The app will be optimized for production with:
-- Code splitting and chunking
-- Image optimization
-- CSS minification
-- JavaScript minification
-
-## Troubleshooting
-
-### API Connection Issues
-- Check that `NEXT_PUBLIC_API_URL` is set correctly
-- Verify the backend service is running
-- Check browser console for CORS errors
-
-### State Not Persisting
-- Verify localStorage is enabled in your browser
-- Check browser console for errors
-
-### UI Components Not Rendering
-- Ensure all shadcn/ui components are installed
-- Check that Tailwind CSS is properly configured
-
-## Contributing
-
-When adding new features:
-1. Create new types in `types/` for any new data structures
-2. Add API utilities to `lib/api.ts` for new endpoints
-3. Create Zustand stores as needed for state management
-4. Build UI components in appropriate `components/` subdirectories
-5. Create pages in the `app/` directory following Next.js conventions
-
-## License
-
-MIT
+The first version used Supabase for Postgres and auth, with an Express API on Render (`backend/`, kept for reference). In November 2026 the Supabase project was gone, so I moved the data and auth to Neon and the API into Next.js route handlers on Vercel.

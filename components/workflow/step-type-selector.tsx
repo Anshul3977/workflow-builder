@@ -14,6 +14,11 @@ const stepTypes: Array<{
   description: string
 }> = [
   {
+    type: 'clean',
+    label: 'Clean',
+    description: 'Fix spacing, punctuation and formatting',
+  },
+  {
     type: 'summarize',
     label: 'Summarize',
     description: 'Condense text into shorter form',

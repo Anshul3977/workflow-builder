@@ -18,6 +18,7 @@ interface StepConfigModalProps {
 }
 
 const stepTypeLabels: Record<string, string> = {
+  clean: 'Clean Text',
   summarize: 'Summarize Text',
   extract: 'Extract Key Points',
   categorize: 'Categorize',

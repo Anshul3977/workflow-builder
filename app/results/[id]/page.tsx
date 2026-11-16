@@ -10,7 +10,6 @@ import { useHistoryStore } from '@/lib/stores/history-store'
 import { workflowApi } from '@/lib/api'
 import { ArrowLeft } from 'lucide-react'
 import type { WorkflowRun } from '@/types/results'
-import { AuthGuard } from '@/components/auth/auth-guard'
 
 export default function ResultsPage() {
   const router = useRouter()
@@ -40,7 +39,7 @@ export default function ResultsPage() {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to load results'
         toast.error(message)
-        router.push('/history')
+        router.push('/builder')
       } finally {
         setIsLoading(false)
       }
@@ -50,7 +49,7 @@ export default function ResultsPage() {
   }, [runId, cachedRun, router])
 
   return (
-    <AuthGuard>
+    <>
       <div className="space-y-8">
         <div className="flex items-center gap-5">
           <Button
@@ -84,6 +83,6 @@ export default function ResultsPage() {
           </div>
         )}
       </div>
-    </AuthGuard>
+    </>
   )
 }
