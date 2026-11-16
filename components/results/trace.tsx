@@ -12,9 +12,13 @@ export const STEP_LABELS: Record<string, string> = {
 export const ms = (n: number | null | undefined) =>
   n == null ? '–' : n >= 1000 ? `${(n / 1000).toFixed(2)} s` : `${Math.round(n)} ms`
 
-/** Cost at list price; tiny numbers stay readable. */
-export const usd = (n: number | null | undefined) =>
-  n == null ? '–' : n === 0 ? '$0' : n < 0.0001 ? `$${(n * 1e6).toFixed(1)}µ` : `$${n.toFixed(5)}`
+/** Cost at list price, with 3 significant digits so fractions of a cent stay readable ($0.0000686). */
+export const usd = (n: number | null | undefined) => {
+  if (n == null) return '–'
+  if (n === 0) return '$0'
+  const decimals = Math.min(10, Math.max(2, 2 - Math.floor(Math.log10(n))))
+  return `$${n.toFixed(decimals)}`
+}
 
 const shortModel = (m: string) => m.split('/').pop() ?? m
 
