@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs"
+    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "eval": "tsx eval/run.ts",
+    "openapi:lint": "tsx scripts/openapi-dump.ts /tmp/wb-openapi.json && pnpm --package=@redocly/cli@2.79.0 dlx redocly lint /tmp/wb-openapi.json --format=summary"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -75,6 +77,7 @@
     "@types/uuid": "^9.0.7",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.15",
     "typescript": "5.7.3",
     "vitest": "^5.1.0"
   },

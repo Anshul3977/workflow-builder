@@ -42,7 +42,7 @@ export function StepConfigurator({ step, onUpdate }: StepConfiguratorProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="short">Short (1-2 sentences)</SelectItem>
-                  <SelectItem value="medium">Medium (3-4 sentences)</SelectItem>
+                  <SelectItem value="medium">Medium (up to 3 sentences)</SelectItem>
                   <SelectItem value="long">Long (5+ sentences)</SelectItem>
                 </SelectContent>
               </Select>
@@ -121,5 +121,70 @@ export function StepConfigurator({ step, onUpdate }: StepConfiguratorProps) {
     }
   }
 
-  return <div className="space-y-4">{renderConfigFields(step.type)}</div>
+  const index = step.position ?? 0
+  const source = parameters.source === undefined ? 'previous' : String(parameters.source)
+
+  return (
+    <div className="space-y-4">
+      {renderConfigFields(step.type)}
+      <fieldset className="space-y-4 border-t pt-4">
+        <legend className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Advanced</legend>
+        {index > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="source">Reads from</Label>
+            <Select
+              value={source}
+              onValueChange={(v) => handleParameterChange('source', v === 'previous' ? undefined : v === 'input' ? 'input' : Number(v))}
+            >
+              <SelectTrigger id="source">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="previous">Previous step (chain)</SelectItem>
+                <SelectItem value="input">Original input</SelectItem>
+                {Array.from({ length: Math.max(0, index - 1) }, (_, i) => (
+                  <SelectItem key={i} value={String(i)}>
+                    Step {i + 1} output
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="retries">Retries</Label>
+            <Select value={String(parameters.retries ?? 2)} onValueChange={(v) => handleParameterChange('retries', Number(v))}>
+              <SelectTrigger id="retries">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[0, 1, 2, 3].map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n === 0 ? 'No retries' : `${n} (backoff)`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="timeout">Timeout per attempt</Label>
+            <Select value={String(parameters.timeoutMs ?? 20000)} onValueChange={(v) => handleParameterChange('timeoutMs', Number(v))}>
+              <SelectTrigger id="timeout">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5000, 10000, 20000, 30000].map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n / 1000} s
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">Retries cover rate limits, server errors, timeouts and dropped connections, with exponential backoff that honors Retry-After.</p>
+      </fieldset>
+    </div>
+  )
 }

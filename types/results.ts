@@ -7,6 +7,10 @@ export interface StepTrace {
   reasoningTokens: number
   providerMs: number | null
   startedAt: string
+  /** Attempts made, including retries. */
+  attempts?: number
+  /** Estimated cost at Groq list price, USD. */
+  costUsd?: number | null
 }
 
 export interface StepResult {
@@ -22,6 +26,7 @@ export interface StepResult {
     output: number
   }
   trace?: StepTrace
+  attempts?: number
 }
 
 export interface ExecutionResult {
@@ -30,7 +35,7 @@ export interface ExecutionResult {
   steps: StepResult[]
   totalProcessingTime: number
   status: 'completed' | 'failed'
-  totals?: { inputTokens: number; outputTokens: number; model: string | null }
+  totals?: { inputTokens: number; outputTokens: number; model: string | null; costUsd?: number | null; retries?: number }
 }
 
 export interface WorkflowRun {

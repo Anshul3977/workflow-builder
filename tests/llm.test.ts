@@ -34,7 +34,7 @@ describe('streamStep', () => {
 
     const [body] = create.mock.calls[0]
     expect(body).toMatchObject({ stream: true, stream_options: { include_usage: true } })
-    expect(body.messages[0].content).toContain('in 2-3 sentences')
+    expect(body.messages[0].content).toContain('at most 2 sentences')
   })
 
   it('accepts usage under x_groq (older Groq stream shape)', async () => {

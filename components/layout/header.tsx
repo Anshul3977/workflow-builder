@@ -24,6 +24,7 @@ export function Header() {
     { href: '/builder', label: 'Builder' },
     { href: '/history', label: 'History' },
     { href: '/status', label: 'Status' },
+    { href: '/docs/api', label: 'API' },
   ]
 
   const isActive = (href: string) => pathname === href

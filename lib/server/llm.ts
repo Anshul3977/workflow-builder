@@ -17,31 +17,36 @@ export const hasAiKey = () => Boolean(process.env.GROQ_API_KEY)
 let _groq: Groq | null = null
 function groq() {
   if (!hasAiKey()) throw new AiKeyMissingError()
-  if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+  // maxRetries 0: retries are done (and traced) by the runner's policy, not hidden inside the SDK.
+  if (!_groq) _groq = new Groq({ apiKey: process.env.GROQ_API_KEY, maxRetries: 0 })
   return _groq
 }
 
 type Params = Record<string, unknown>
 
+// v2 prompts, tightened after the eval (eval/results.md): summaries ran longer than short inputs and dropped
+// owners and numbers; extraction inferred dates that were not in the text.
+const KEEP_FACTS = 'Keep names, numbers and dates exactly as written. Do not add facts that are not in the text.'
+
 const PROMPTS: Record<StepType, (text: string, p: Params) => string> = {
   clean: (text) =>
-    `Clean and normalize the following text. Remove extra whitespace, fix formatting, and ensure proper punctuation.\n\nText: ${text}\n\nReturn only the cleaned text.`,
+    `Clean and normalize the following text. Collapse repeated spaces, fix capitalization, formatting and punctuation, and keep every fact and identifier unchanged.\n\nText: ${text}\n\nReturn only the cleaned text.`,
   summarize: (text, p) => {
-    const hint = p.length === 'short' ? 'in 2-3 sentences' : p.length === 'long' ? 'in 5-7 sentences' : 'in 3-4 sentences'
-    return `Summarize the following text ${hint}.\n\nText: ${text}\n\nReturn only the summary.`
+    const hint = p.length === 'short' ? 'at most 2 sentences' : p.length === 'long' ? '5-7 sentences' : 'at most 3 sentences'
+    return `Summarize the following text in ${hint}. The summary must be clearly shorter than the text. ${KEEP_FACTS} Keep who owns each task, if any.\n\nText: ${text}\n\nReturn only the summary.`
   },
   extract: (text, p) => {
     const topics = (p.topics as string) || 'key points'
     const max = Number(p.maxPoints) || 0
-    return `Extract the ${topics} from the following text as a bullet-point list${max ? ` (at most ${max} bullets)` : ''}.\n\nText: ${text}\n\nReturn only the list.`
+    return `Extract the ${topics} from the following text as a bullet-point list${max ? ` (at most ${max} bullets)` : ''}. Include every item the text gives. ${KEEP_FACTS} If an owner or deadline is not stated, write "not stated" rather than guessing.\n\nText: ${text}\n\nReturn only the list.`
   },
   categorize: (text, p) => {
     const categories = (p.categories as string) || 'topic, sentiment, urgency'
-    return `Categorize the following text by: ${categories}\n\nText: ${text}\n\nAnswer as lines of the form "- Category: value".`
+    return `Categorize the following text by: ${categories}\n\nText: ${text}\n\nAnswer with exactly one line per category, of the form "- Category: value". No other lines.`
   },
   translate: (text, p) => {
     const lang = (p.targetLanguage as string) || 'Hindi'
-    return `Translate the following text into ${lang}, keeping the meaning and tone.\n\nText: ${text}\n\nReturn only the translation.`
+    return `Translate the following text into ${lang}, keeping the meaning and tone. Keep numbers and names exact.\n\nText: ${text}\n\nReturn only the translation.`
   },
   sentiment: (text) =>
     `Analyze the sentiment of the following text. Give: overall sentiment (positive, negative, neutral or mixed), confidence (high, medium, low), the main emotional tones, and a one-line reason.\n\nText: ${text}\n\nUse a short structured format.`,
@@ -60,6 +65,10 @@ export interface StepTrace {
   /** Groq's server-side generation time, ms, when reported. */
   providerMs: number | null
   startedAt: string
+  /** Attempts made, including retries (set by the runner). */
+  attempts?: number
+  /** List-price estimate in USD (set by the runner). */
+  costUsd?: number | null
 }
 
 export interface StepOutput {
@@ -74,6 +83,11 @@ type Usage = {
   completion_tokens?: number
   total_time?: number
   completion_tokens_details?: { reasoning_tokens?: number }
+}
+
+/** The instruction a step sends, with the text replaced by a placeholder (used by the eval judge). */
+export function instructionFor(type: StepType, params: Params): string {
+  return PROMPTS[type]('<text>', params)
 }
 
 function request(type: StepType, text: string, params: Params) {
@@ -121,7 +135,7 @@ export async function streamStep(
   const client = groq()
   const stream = await client.chat.completions.create(
     { ...request(type, text, params), stream: true, stream_options: { include_usage: true } } as Parameters<typeof client.chat.completions.create>[0] & { stream: true },
-    { timeout: 30_000, signal },
+    { timeout: 30_000, signal, maxRetries: 0 },
   )
   let out = ''
   let first: number | null = null

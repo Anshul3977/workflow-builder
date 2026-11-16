@@ -71,3 +71,8 @@ CREATE INDEX IF NOT EXISTS idx_traces_created ON workflow_step_traces(created_at
 ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS model TEXT;
 ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS input_tokens INTEGER;
 ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS output_tokens INTEGER;
+
+-- Retries and cost (v3)
+ALTER TABLE workflow_step_traces ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE workflow_step_traces ADD COLUMN IF NOT EXISTS cost_usd NUMERIC(12, 9);
+ALTER TABLE workflow_runs ADD COLUMN IF NOT EXISTS cost_usd NUMERIC(12, 9);

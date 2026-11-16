@@ -27,6 +27,8 @@ jobs:
         run: pnpm typecheck
       - name: Unit and API tests
         run: pnpm test
+      - name: OpenAPI lint (Redocly)
+        run: pnpm openapi:lint
       - name: Build
         run: pnpm build
         env:

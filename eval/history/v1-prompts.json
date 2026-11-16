@@ -1,0 +1,1081 @@
+{
+  "summary": {
+    "model": "openai/gpt-oss-20b",
+    "judgeModel": "openai/gpt-oss-120b",
+    "date": "2026-11-17",
+    "cases": 15,
+    "runsCompleted": 15,
+    "checkPassRate": 0.9302325581395349,
+    "checksPassed": 120,
+    "checksTotal": 129,
+    "casesAllChecksPass": 7,
+    "judge": {
+      "judged": 15,
+      "faithfulness": 4.733333333333333,
+      "completeness": 4.6,
+      "instruction_following": 4.4,
+      "casesWithUnsupportedClaims": 3
+    },
+    "latencyMs": {
+      "p50": 1025,
+      "p95": 1923
+    },
+    "costUsd": {
+      "meanPerRun": 0.00010271500000000001,
+      "totalWorkflow": 0.0015407250000000002,
+      "judge": 0.0075179999999999995
+    },
+    "retries": 0
+  },
+  "byTemplate": [
+    {
+      "slug": "support-ticket-triage",
+      "cases": 3,
+      "checks": "33/33",
+      "faith": 5,
+      "comp": 4.666666666666667,
+      "instr": 3.6666666666666665,
+      "p50": 1246
+    },
+    {
+      "slug": "meeting-notes-to-actions",
+      "cases": 3,
+      "checks": "18/22",
+      "faith": 4,
+      "comp": 3.6666666666666665,
+      "instr": 4.333333333333333,
+      "p50": 1025
+    },
+    {
+      "slug": "review-to-hindi-brief",
+      "cases": 3,
+      "checks": "14/16",
+      "faith": 5,
+      "comp": 5,
+      "instr": 4.333333333333333,
+      "p50": 783
+    },
+    {
+      "slug": "article-key-facts",
+      "cases": 3,
+      "checks": "34/36",
+      "faith": 4.666666666666667,
+      "comp": 4.666666666666667,
+      "instr": 4.666666666666667,
+      "p50": 1173
+    },
+    {
+      "slug": "feedback-sentiment",
+      "cases": 3,
+      "checks": "21/22",
+      "faith": 5,
+      "comp": 5,
+      "instr": 5,
+      "p50": 808
+    }
+  ],
+  "results": [
+    {
+      "id": "triage-sample",
+      "template": "support-ticket-triage",
+      "status": "completed",
+      "latencyMs": 1404,
+      "inputTokens": 482,
+      "outputTokens": 281,
+      "costUsd": 0.00012045,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.clean.non_empty",
+          "pass": true,
+          "detail": "250 chars"
+        },
+        {
+          "id": "1.clean.no_double_spaces",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "id": "1.clean.length_preserved",
+          "pass": true,
+          "detail": "length ratio 1.02"
+        },
+        {
+          "id": "2.sentiment.non_empty",
+          "pass": true,
+          "detail": "226 chars"
+        },
+        {
+          "id": "2.sentiment.has_label",
+          "pass": true,
+          "detail": "negative"
+        },
+        {
+          "id": "2.sentiment.has_confidence",
+          "pass": true,
+          "detail": "confidence word"
+        },
+        {
+          "id": "3.categorize.non_empty",
+          "pass": true,
+          "detail": "163 chars"
+        },
+        {
+          "id": "3.categorize.one_line_per_category",
+          "pass": true,
+          "detail": "6 \"Category: value\" lines for 3 categories"
+        },
+        {
+          "id": "fact:48213",
+          "pass": true,
+          "detail": "found \"48213\""
+        },
+        {
+          "id": "fact:high",
+          "pass": true,
+          "detail": "found \"high\""
+        },
+        {
+          "id": "sentiment_label",
+          "pass": true,
+          "detail": "got negative, want negative"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 4,
+        "instruction_following": 2,
+        "unsupported_claims": [],
+        "reason": "Extra placeholder lines break the required format despite correct content"
+      },
+      "outputs": [
+        "Hi team, my order #48213 was supposed to arrive Monday, and it's now Thursday. Tracking hasn't updated in three days! I paid for express shipping. This is the second time this month. If it doesn't come by tomorrow, I want a full refund. Thanks, Priya",
+        "- **Overall sentiment:** Negative  \n- **Confidence:** High  \n- **Main emotional tones:** Frustration, urgency, disappointment  \n- **Reason:** The customer expresses dissatisfaction with delayed delivery and threatens a refund.",
+        "- Category: topic  \n- Category: urgency  \n- Category: team to route to\n\n- Category: Delivery Issues  \n- Category: high  \n- Category: Customer Support - Fulfillment"
+      ]
+    },
+    {
+      "id": "triage-billing",
+      "template": "support-ticket-triage",
+      "status": "completed",
+      "latencyMs": 1246,
+      "inputTokens": 469,
+      "outputTokens": 231,
+      "costUsd": 0.000104475,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.clean.non_empty",
+          "pass": true,
+          "detail": "179 chars"
+        },
+        {
+          "id": "1.clean.no_double_spaces",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "id": "1.clean.length_preserved",
+          "pass": true,
+          "detail": "length ratio 0.98"
+        },
+        {
+          "id": "2.sentiment.non_empty",
+          "pass": true,
+          "detail": "188 chars"
+        },
+        {
+          "id": "2.sentiment.has_label",
+          "pass": true,
+          "detail": "negative"
+        },
+        {
+          "id": "2.sentiment.has_confidence",
+          "pass": true,
+          "detail": "confidence word"
+        },
+        {
+          "id": "3.categorize.non_empty",
+          "pass": true,
+          "detail": "109 chars"
+        },
+        {
+          "id": "3.categorize.one_line_per_category",
+          "pass": true,
+          "detail": "3 \"Category: value\" lines for 3 categories"
+        },
+        {
+          "id": "fact:INV-7731",
+          "pass": true,
+          "detail": "found \"INV-7731\""
+        },
+        {
+          "id": "fact:billing",
+          "pass": true,
+          "detail": "found \"billing\""
+        },
+        {
+          "id": "sentiment_label",
+          "pass": true,
+          "detail": "got negative, want negative|neutral|mixed"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 4,
+        "unsupported_claims": [],
+        "reason": "Outputs are factually accurate and complete, but step 3 deviates slightly from the exact required format."
+      },
+      "outputs": [
+        "Hello, I was charged twice for my annual plan (Rs 4,999 each) on 3 Nov. invoice numbers INV-7731 and INV-7732. Please refund the duplicate; I only have one account. Regards, Arjun",
+        "- **Overall sentiment:** Negative  \n- **Confidence:** High  \n- **Main emotional tones:** Frustration, Annoyance  \n- **Reason:** Customer reports being double‑charged and requests a refund.",
+        "- Category: Topic: Billing / Refund  \n- Category: Urgency: High  \n- Category: Team: Finance / Billing Support"
+      ]
+    },
+    {
+      "id": "triage-praise",
+      "template": "support-ticket-triage",
+      "status": "completed",
+      "latencyMs": 1158,
+      "inputTokens": 420,
+      "outputTokens": 225,
+      "costUsd": 0.000099,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.clean.non_empty",
+          "pass": true,
+          "detail": "127 chars"
+        },
+        {
+          "id": "1.clean.no_double_spaces",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "id": "1.clean.length_preserved",
+          "pass": true,
+          "detail": "length ratio 1.00"
+        },
+        {
+          "id": "2.sentiment.non_empty",
+          "pass": true,
+          "detail": "219 chars"
+        },
+        {
+          "id": "2.sentiment.has_label",
+          "pass": true,
+          "detail": "positive"
+        },
+        {
+          "id": "2.sentiment.has_confidence",
+          "pass": true,
+          "detail": "confidence word"
+        },
+        {
+          "id": "3.categorize.non_empty",
+          "pass": true,
+          "detail": "119 chars"
+        },
+        {
+          "id": "3.categorize.one_line_per_category",
+          "pass": true,
+          "detail": "3 \"Category: value\" lines for 3 categories"
+        },
+        {
+          "id": "fact:Kavya",
+          "pass": true,
+          "detail": "found \"Kavya\""
+        },
+        {
+          "id": "fact:low",
+          "pass": true,
+          "detail": "found \"low\""
+        },
+        {
+          "id": "sentiment_label",
+          "pass": true,
+          "detail": "got positive, want positive"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "All steps follow the instructions, remain faithful to the input, and include all required information."
+      },
+      "outputs": [
+        "Just wanted to say your support agent Kavya fixed my login issue in 5 minutes! Super helpful, no further action needed. Cheers.",
+        "**Overall Sentiment:** Positive  \n**Confidence:** High  \n**Main Emotional Tones:** Gratitude, Satisfaction, Appreciation  \n**Reason:** The customer expresses thanks for quick, effective help, showing clear satisfaction.",
+        "- Topic: Customer Feedback Sentiment  \n- Urgency: Low  \n- Team to route to: Customer Experience / Support Feedback Team"
+      ]
+    },
+    {
+      "id": "meeting-sample",
+      "template": "meeting-notes-to-actions",
+      "status": "completed",
+      "latencyMs": 1923,
+      "inputTokens": 371,
+      "outputTokens": 283,
+      "costUsd": 0.00011272500000000002,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.summarize.non_empty",
+          "pass": true,
+          "detail": "444 chars"
+        },
+        {
+          "id": "1.summarize.sentence_limit",
+          "pass": true,
+          "detail": "3 sentences (asked ≤3)"
+        },
+        {
+          "id": "1.summarize.shorter_than_input",
+          "pass": false,
+          "detail": "444/390 chars"
+        },
+        {
+          "id": "2.extract.non_empty",
+          "pass": true,
+          "detail": "204 chars"
+        },
+        {
+          "id": "2.extract.bullets",
+          "pass": true,
+          "detail": "3/3 lines are bullets"
+        },
+        {
+          "id": "fact:Meera",
+          "pass": true,
+          "detail": "found \"Meera\""
+        },
+        {
+          "id": "fact:Ana",
+          "pass": true,
+          "detail": "found \"Ana\""
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "The extracted list accurately reflects all action items with correct owners and deadlines, matching the source and following the given format."
+      },
+      "outputs": [
+        "Payments API is complete, but webhook retries remain flaky; Meera will address the retry fix, which should take two more days. The design review for onboarding has been moved to Friday, and Ana will send the Figma link by Thursday; the dark‑mode ticket has been removed from the sprint. QA identified three blockers in checkout, which the dev team will triage today, with the next release slated for the 28th if blockers are resolved by Monday.",
+        "- **Meera** – Fix webhook retry issue (deadline: in 2 days)  \n- **Ana** – Send Figma link for onboarding design review (deadline: by Thursday)  \n- **Dev team** – Triage checkout blockers (deadline: today)"
+      ]
+    },
+    {
+      "id": "meeting-infra",
+      "template": "meeting-notes-to-actions",
+      "status": "completed",
+      "latencyMs": 1025,
+      "inputTokens": 335,
+      "outputTokens": 214,
+      "costUsd": 0.00008932499999999999,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.summarize.non_empty",
+          "pass": true,
+          "detail": "379 chars"
+        },
+        {
+          "id": "1.summarize.sentence_limit",
+          "pass": true,
+          "detail": "3 sentences (asked ≤3)"
+        },
+        {
+          "id": "1.summarize.shorter_than_input",
+          "pass": false,
+          "detail": "379/295 chars"
+        },
+        {
+          "id": "2.extract.non_empty",
+          "pass": true,
+          "detail": "219 chars"
+        },
+        {
+          "id": "2.extract.bullets",
+          "pass": true,
+          "detail": "3/3 lines are bullets"
+        },
+        {
+          "id": "fact:Sanjay",
+          "pass": true,
+          "detail": "found \"Sanjay\""
+        },
+        {
+          "id": "fact:Leela",
+          "pass": true,
+          "detail": "found \"Leela\""
+        },
+        {
+          "id": "fact:Omar",
+          "pass": true,
+          "detail": "found \"Omar\""
+        }
+      ],
+      "judge": {
+        "faithfulness": 4,
+        "completeness": 3,
+        "instruction_following": 3,
+        "unsupported_claims": [
+          "Deadline: 20th (budget review date)"
+        ],
+        "reason": "The output missed the log‑storage action and inferred a deadline not explicitly stated, lowering completeness and faithfulness."
+      },
+      "outputs": [
+        "Infra weekly update: Postgres disk usage is at 82%, and Sanjay will add a retention job by Wednesday. Staging deployments have been failing since Friday due to an expired certificate, which Leela will renew today. A budget review with finance is scheduled for the 20th, with Omar preparing the cost sheet, and a decision was made to move logs to cheaper storage after the review.",
+        "- Add retention job – **Owner:** Sanjay – **Deadline:** Wednesday  \n- Renew expired certificate – **Owner:** Leela – **Deadline:** today  \n- Prepare cost sheet – **Owner:** Omar – **Deadline:** 20th (budget review date)"
+      ]
+    },
+    {
+      "id": "meeting-hiring",
+      "template": "meeting-notes-to-actions",
+      "status": "completed",
+      "latencyMs": 908,
+      "inputTokens": 314,
+      "outputTokens": 311,
+      "costUsd": 0.00011685,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.summarize.non_empty",
+          "pass": true,
+          "detail": "300 chars"
+        },
+        {
+          "id": "1.summarize.sentence_limit",
+          "pass": true,
+          "detail": "2 sentences (asked ≤3)"
+        },
+        {
+          "id": "1.summarize.shorter_than_input",
+          "pass": false,
+          "detail": "300/259 chars"
+        },
+        {
+          "id": "2.extract.non_empty",
+          "pass": true,
+          "detail": "219 chars"
+        },
+        {
+          "id": "2.extract.bullets",
+          "pass": true,
+          "detail": "3/3 lines are bullets"
+        },
+        {
+          "id": "fact:Priyanka",
+          "pass": false,
+          "detail": "missing in step 2"
+        },
+        {
+          "id": "fact:Vikram",
+          "pass": true,
+          "detail": "found \"Vikram\""
+        }
+      ],
+      "judge": {
+        "faithfulness": 3,
+        "completeness": 3,
+        "instruction_following": 5,
+        "unsupported_claims": [
+          "(TBD) – schedule the remaining onsite interview for the ML role by next week"
+        ],
+        "reason": "Owner for the ML onsite schedule is incorrectly listed as TBD instead of Priyanka, reducing faithfulness and completeness."
+      },
+      "outputs": [
+        "Hiring sync notes: two backend offers were made, one accepted with a Dec 2 start date; the remaining onsite interview for the ML role is to be scheduled next week. Vikram will revise the data engineer JD by Monday, and the referral bonus has been increased to Rs 50k, to be announced by HR on Friday.",
+        "- **Vikram** – revise the data engineer JD by **Monday**  \n- **HR** – announce the referral bonus increase to Rs 50k by **Friday**  \n- **(TBD)** – schedule the remaining onsite interview for the ML role by **next week**"
+      ]
+    },
+    {
+      "id": "hindi-sample",
+      "template": "review-to-hindi-brief",
+      "status": "completed",
+      "latencyMs": 783,
+      "inputTokens": 340,
+      "outputTokens": 257,
+      "costUsd": 0.0001026,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.summarize.non_empty",
+          "pass": true,
+          "detail": "398 chars"
+        },
+        {
+          "id": "1.summarize.sentence_limit",
+          "pass": true,
+          "detail": "3 sentences (asked ≤3)"
+        },
+        {
+          "id": "1.summarize.shorter_than_input",
+          "pass": false,
+          "detail": "398/352 chars"
+        },
+        {
+          "id": "2.translate.non_empty",
+          "pass": true,
+          "detail": "424 chars"
+        },
+        {
+          "id": "2.translate.devanagari",
+          "pass": true,
+          "detail": "100% Devanagari letters"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 3,
+        "unsupported_claims": [],
+        "reason": "Step 1 did not meet the 2-3 sentence requirement, otherwise content is accurate and complete"
+      },
+      "outputs": [
+        "The earbuds have a battery life that comfortably lasts a full workday and a USB‑C case that charges quickly. Their sound is warm with solid bass, though the highs become harsh at high volume, and noise‑canceling works well on buses but is less effective on flights. After switching to the smallest ear tips, the fit improved, and despite a few drawbacks, the reviewer recommends them for the price.",
+        "ईयरबड्स की बैटरी लाइफ़ काम के पूरे दिन को आराम से चलाने के लिए पर्याप्त है और यूएसबी‑सी केस तेज़ी से चार्ज होता है। इसका साउंड गर्म है और बेस ठोस है, लेकिन ऊँची ध्वनि पर वॉल्यूम ज्यादा होने पर ऊँचे सुर कठोर हो जाते हैं, और शोर-रद्दीकरण बसों पर अच्छा काम करता है, पर उड़ानों पर कम असरदार होता है। सबसे छोटे ईयर टिप्स पर स्विच करने के बाद फिट बेहतर हुआ, और कुछ कमियों के बावजूद समीक्षक इनकी कीमत के लिए इन्हें अनुशंसा करता है।"
+      ]
+    },
+    {
+      "id": "hindi-laptop",
+      "template": "review-to-hindi-brief",
+      "status": "completed",
+      "latencyMs": 790,
+      "inputTokens": 311,
+      "outputTokens": 217,
+      "costUsd": 0.000088425,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.summarize.non_empty",
+          "pass": true,
+          "detail": "331 chars"
+        },
+        {
+          "id": "1.summarize.sentence_limit",
+          "pass": true,
+          "detail": "3 sentences (asked ≤3)"
+        },
+        {
+          "id": "1.summarize.shorter_than_input",
+          "pass": false,
+          "detail": "331/274 chars"
+        },
+        {
+          "id": "2.translate.non_empty",
+          "pass": true,
+          "detail": "351 chars"
+        },
+        {
+          "id": "2.translate.devanagari",
+          "pass": true,
+          "detail": "100% Devanagari letters"
+        },
+        {
+          "id": "fact:1.3",
+          "pass": true,
+          "detail": "found \"1.3\""
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "All steps correctly summarized and translated with full fidelity and no extra claims."
+      },
+      "outputs": [
+        "The laptop is lightweight (1.3 kg) and boots quickly, offering a comfortable keyboard and solid value for college use. It provides about eight hours of battery life and handles browsing well, but the fan becomes loud during gaming and the webcam performs poorly in low light. Overall, it’s a good choice with a few minor drawbacks.",
+        "लैपटॉप हल्का (1.3 किलो) है और जल्दी बूट होता है, जिससे कॉलेज के उपयोग के लिए आरामदायक कीबोर्ड और अच्छा मूल्य मिलता है। यह लगभग आठ घंटे की बैटरी लाइफ देता है और ब्राउज़िंग में अच्छा काम करता है, लेकिन गेमिंग के दौरान फैन तेज़ हो जाता है और कम रोशनी में वेबकैम का प्रदर्शन ख़राब होता है। कुल मिलाकर, यह कुछ छोटे-छोटे नुकसानों के बावजूद एक अच्छी पसंद है।"
+      ]
+    },
+    {
+      "id": "hindi-blender",
+      "template": "review-to-hindi-brief",
+      "status": "completed",
+      "latencyMs": 653,
+      "inputTokens": 275,
+      "outputTokens": 144,
+      "costUsd": 0.00006382499999999999,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.summarize.non_empty",
+          "pass": true,
+          "detail": "206 chars"
+        },
+        {
+          "id": "1.summarize.sentence_limit",
+          "pass": true,
+          "detail": "3 sentences (asked ≤3)"
+        },
+        {
+          "id": "1.summarize.shorter_than_input",
+          "pass": true,
+          "detail": "206/238 chars"
+        },
+        {
+          "id": "2.translate.non_empty",
+          "pass": true,
+          "detail": "220 chars"
+        },
+        {
+          "id": "2.translate.devanagari",
+          "pass": true,
+          "detail": "100% Devanagari letters"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "All facts are accurate, all required information is present, and steps follow the given instructions."
+      },
+      "outputs": [
+        "The blender crushes ice easily but is noisy and leaks when overfilled. Cleaning is easy with removable blades, and customer service promptly replaced a cracked jar. Overall, it receives a three‑star rating.",
+        "ब्लेंडर बर्फ को आसानी से कुचल देता है लेकिन शोर करता है और अधिक भरने पर रिसाव होता है। हटाने योग्य ब्लेड के साथ सफ़ाई आसान है, और ग्राहक सेवा ने तुरंत एक टूटे हुए जार को बदल दिया। कुल मिलाकर, इसे तीन‑तारे की रेटिंग मिली।"
+      ]
+    },
+    {
+      "id": "article-sample",
+      "template": "article-key-facts",
+      "status": "completed",
+      "latencyMs": 1056,
+      "inputTokens": 524,
+      "outputTokens": 328,
+      "costUsd": 0.00013769999999999999,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.clean.non_empty",
+          "pass": true,
+          "detail": "333 chars"
+        },
+        {
+          "id": "1.clean.no_double_spaces",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "id": "1.clean.length_preserved",
+          "pass": true,
+          "detail": "length ratio 1.00"
+        },
+        {
+          "id": "2.summarize.non_empty",
+          "pass": true,
+          "detail": "300 chars"
+        },
+        {
+          "id": "2.summarize.sentence_limit",
+          "pass": true,
+          "detail": "3 sentences (asked ≤4)"
+        },
+        {
+          "id": "2.summarize.shorter_than_input",
+          "pass": true,
+          "detail": "300/333 chars"
+        },
+        {
+          "id": "3.extract.non_empty",
+          "pass": true,
+          "detail": "143 chars"
+        },
+        {
+          "id": "3.extract.bullets",
+          "pass": true,
+          "detail": "9/9 lines are bullets"
+        },
+        {
+          "id": "fact:11 km",
+          "pass": true,
+          "detail": "found \"11 km\""
+        },
+        {
+          "id": "fact:45,000",
+          "pass": true,
+          "detail": "found \"45,000\""
+        },
+        {
+          "id": "fact:1,600",
+          "pass": true,
+          "detail": "found \"1,600\""
+        },
+        {
+          "id": "fact:2028",
+          "pass": true,
+          "detail": "found \"2028\""
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "All steps faithfully reflect the source, include all required information, and follow the instructions precisely."
+      },
+      "outputs": [
+        "Nagpur, 12 Nov – The city’s new metro extension opened to the public on Wednesday, adding 11 km and 9 stations to the network. Officials said about 45,000 riders used the line on day one. The extension cost roughly Rs 1,600 crore and was completed four months behind schedule. The next phase, toward the airport, is planned for 2028.",
+        "Nagpur’s metro network expanded on 12 Nov with an 11 km extension comprising nine new stations, attracting roughly 45,000 riders on its opening day. The project, completed four months late, cost about Rs 1,600 crore. Officials plan the next phase, which will extend the line to the airport, for 2028.",
+        "- Nagpur  \n- 12 Nov  \n- 11 km  \n- nine new stations  \n- 45,000 riders  \n- Rs 1,600 crore  \n- four months late  \n- airport (next phase)  \n- 2028  "
+      ]
+    },
+    {
+      "id": "article-heat",
+      "template": "article-key-facts",
+      "status": "completed",
+      "latencyMs": 1336,
+      "inputTokens": 518,
+      "outputTokens": 274,
+      "costUsd": 0.00012105000000000002,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.clean.non_empty",
+          "pass": true,
+          "detail": "285 chars"
+        },
+        {
+          "id": "1.clean.no_double_spaces",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "id": "1.clean.length_preserved",
+          "pass": true,
+          "detail": "length ratio 1.00"
+        },
+        {
+          "id": "2.summarize.non_empty",
+          "pass": true,
+          "detail": "304 chars"
+        },
+        {
+          "id": "2.summarize.sentence_limit",
+          "pass": true,
+          "detail": "4 sentences (asked ≤4)"
+        },
+        {
+          "id": "2.summarize.shorter_than_input",
+          "pass": false,
+          "detail": "304/285 chars"
+        },
+        {
+          "id": "3.extract.non_empty",
+          "pass": true,
+          "detail": "146 chars"
+        },
+        {
+          "id": "3.extract.bullets",
+          "pass": true,
+          "detail": "9/9 lines are bullets"
+        },
+        {
+          "id": "fact:41.2",
+          "pass": true,
+          "detail": "found \"41.2\""
+        },
+        {
+          "id": "fact:5,800",
+          "pass": true,
+          "detail": "found \"5,800\""
+        },
+        {
+          "id": "fact:120",
+          "pass": true,
+          "detail": "found \"120\""
+        },
+        {
+          "id": "fact:Pune",
+          "pass": true,
+          "detail": "found \"Pune\""
+        }
+      ],
+      "judge": {
+        "faithfulness": 4,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [
+          "IMD (India Meteorological Department)"
+        ],
+        "reason": "The list adds an unsupported expansion for IMD, lowering faithfulness, but otherwise is complete and follows instructions."
+      },
+      "outputs": [
+        "Pune, 3 June – Temperatures touched 41.2 °C on Monday, the highest June reading since 2019, the IMD said. Power demand hit a record 5,800 MW. The civic body opened 120 cooling centres and advised people to avoid going out between noon and 4 pm. Monsoon showers are expected by 10 June.",
+        "Temperatures in Pune peaked at 41.2 °C on Monday, marking the highest June reading since 2019, according to the IMD. Power demand surged to a record 5,800 MW. The city opened 120 cooling centres and urged residents to stay indoors between noon and 4 pm. Monsoon showers are expected to arrive by 10 June.",
+        "- Pune  \n- 41.2 °C  \n- Monday  \n- 2019  \n- 5,800 MW  \n- 120 cooling centres  \n- noon to 4 pm  \n- 10 June  \n- IMD (India Meteorological Department)"
+      ]
+    },
+    {
+      "id": "article-startup",
+      "template": "article-key-facts",
+      "status": "completed",
+      "latencyMs": 1173,
+      "inputTokens": 514,
+      "outputTokens": 365,
+      "costUsd": 0.00014805,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.clean.non_empty",
+          "pass": true,
+          "detail": "288 chars"
+        },
+        {
+          "id": "1.clean.no_double_spaces",
+          "pass": true,
+          "detail": "ok"
+        },
+        {
+          "id": "1.clean.length_preserved",
+          "pass": true,
+          "detail": "length ratio 1.01"
+        },
+        {
+          "id": "2.summarize.non_empty",
+          "pass": true,
+          "detail": "357 chars"
+        },
+        {
+          "id": "2.summarize.sentence_limit",
+          "pass": true,
+          "detail": "3 sentences (asked ≤4)"
+        },
+        {
+          "id": "2.summarize.shorter_than_input",
+          "pass": false,
+          "detail": "357/288 chars"
+        },
+        {
+          "id": "3.extract.non_empty",
+          "pass": true,
+          "detail": "147 chars"
+        },
+        {
+          "id": "3.extract.bullets",
+          "pass": true,
+          "detail": "10/10 lines are bullets"
+        },
+        {
+          "id": "fact:12 million",
+          "pass": true,
+          "detail": "found \"12 million\""
+        },
+        {
+          "id": "fact:Neha Rao",
+          "pass": true,
+          "detail": "found \"Neha Rao\""
+        },
+        {
+          "id": "fact:300,000",
+          "pass": true,
+          "detail": "found \"300,000\""
+        },
+        {
+          "id": "fact:Bangladesh",
+          "pass": true,
+          "detail": "found \"Bangladesh\""
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 4,
+        "instruction_following": 4,
+        "unsupported_claims": [],
+        "reason": "Missing the 18 March date in the extraction step reduces completeness and instruction adherence."
+      },
+      "outputs": [
+        "Bengaluru-based Kisaan AI raised $12 million in a Series A led by Lightbox, the company said on 18 March. Founded in 2021 by Neha Rao and Amit Shah, it serves 300,000 farmers across nine states with crop‑disease detection from phone photos. The funds will go to expanding into Bangladesh.",
+        "Bengaluru‑based Kisaan AI, founded in 2021 by Neha Rao and Amit Shah, has secured $12 million in a Series A round led by Lightbox. The company provides crop‑disease detection from phone photos to 300,000 farmers in nine Indian states. The new funding will support the firm’s expansion into Bangladesh, broadening its reach to farmers in neighboring markets.",
+        "- Bengaluru  \n- 2021  \n- Neha Rao  \n- Amit Shah  \n- $12 million  \n- Series A  \n- Lightbox  \n- 300,000 farmers  \n- nine Indian states  \n- Bangladesh"
+      ]
+    },
+    {
+      "id": "feedback-sample",
+      "template": "feedback-sentiment",
+      "status": "completed",
+      "latencyMs": 808,
+      "inputTokens": 309,
+      "outputTokens": 255,
+      "costUsd": 0.000099675,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.sentiment.non_empty",
+          "pass": true,
+          "detail": "241 chars"
+        },
+        {
+          "id": "1.sentiment.has_label",
+          "pass": true,
+          "detail": "mixed"
+        },
+        {
+          "id": "1.sentiment.has_confidence",
+          "pass": true,
+          "detail": "confidence word"
+        },
+        {
+          "id": "2.categorize.non_empty",
+          "pass": true,
+          "detail": "187 chars"
+        },
+        {
+          "id": "2.categorize.one_line_per_category",
+          "pass": true,
+          "detail": "3 \"Category: value\" lines for 3 categories"
+        },
+        {
+          "id": "fact:export",
+          "pass": false,
+          "detail": "missing in step 2"
+        },
+        {
+          "id": "sentiment_label",
+          "pass": true,
+          "detail": "got mixed, want mixed|positive"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "All output matches the input and instructions precisely."
+      },
+      "outputs": [
+        "**Overall sentiment:** Mixed  \n**Confidence:** High  \n**Main emotional tones:** Appreciation, Frustration, Mild urgency  \n**One-line reason:** The user praises performance improvements but complains about missing features and usability bugs.",
+        "- Feature Area: Performance, Missing Features, Usability  \n- Bug vs Request: Request (missing features) + Bug (usability issues)  \n- Severity: Moderate (mixed sentiment with mild urgency)"
+      ]
+    },
+    {
+      "id": "feedback-crash",
+      "template": "feedback-sentiment",
+      "status": "completed",
+      "latencyMs": 500,
+      "inputTokens": 308,
+      "outputTokens": 138,
+      "costUsd": 0.0000645,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.sentiment.non_empty",
+          "pass": true,
+          "detail": "226 chars"
+        },
+        {
+          "id": "1.sentiment.has_label",
+          "pass": true,
+          "detail": "negative"
+        },
+        {
+          "id": "1.sentiment.has_confidence",
+          "pass": true,
+          "detail": "confidence word"
+        },
+        {
+          "id": "2.categorize.non_empty",
+          "pass": true,
+          "detail": "97 chars"
+        },
+        {
+          "id": "2.categorize.one_line_per_category",
+          "pass": true,
+          "detail": "3 \"Category: value\" lines for 3 categories"
+        },
+        {
+          "id": "fact:bug",
+          "pass": true,
+          "detail": "found \"bug\""
+        },
+        {
+          "id": "fact:high",
+          "pass": true,
+          "detail": "found \"high\""
+        },
+        {
+          "id": "sentiment_label",
+          "pass": true,
+          "detail": "got negative, want negative"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "All required information is accurate, complete, and follows the given instructions."
+      },
+      "outputs": [
+        "**Overall Sentiment:** Negative  \n**Confidence:** High  \n**Main Emotional Tones:** Frustration, annoyance, helplessness  \n**One‑Line Reason:** Repeated app crashes causing loss of drafts make the user feel stuck and irritated.",
+        "- Feature Area: Stability / App Performance  \n- Bug vs Request: Bug  \n- Severity: High (Critical)"
+      ]
+    },
+    {
+      "id": "feedback-request",
+      "template": "feedback-sentiment",
+      "status": "completed",
+      "latencyMs": 938,
+      "inputTokens": 293,
+      "outputTokens": 167,
+      "costUsd": 0.000072075,
+      "retries": 0,
+      "checks": [
+        {
+          "id": "1.sentiment.non_empty",
+          "pass": true,
+          "detail": "237 chars"
+        },
+        {
+          "id": "1.sentiment.has_label",
+          "pass": true,
+          "detail": "positive"
+        },
+        {
+          "id": "1.sentiment.has_confidence",
+          "pass": true,
+          "detail": "confidence word"
+        },
+        {
+          "id": "2.categorize.non_empty",
+          "pass": true,
+          "detail": "77 chars"
+        },
+        {
+          "id": "2.categorize.one_line_per_category",
+          "pass": true,
+          "detail": "3 \"Category: value\" lines for 3 categories"
+        },
+        {
+          "id": "fact:request",
+          "pass": true,
+          "detail": "found \"request\""
+        },
+        {
+          "id": "sentiment_label",
+          "pass": true,
+          "detail": "got positive, want positive"
+        }
+      ],
+      "judge": {
+        "faithfulness": 5,
+        "completeness": 5,
+        "instruction_following": 5,
+        "unsupported_claims": [],
+        "reason": "All steps correctly follow instructions, are complete and faithful."
+      },
+      "outputs": [
+        "- **Overall sentiment**: Positive  \n- **Confidence**: High  \n- **Main emotional tones**: Satisfaction, appreciation, mild suggestion  \n- **Reason**: The reviewer expresses enjoyment and gratitude while offering a constructive suggestion.",
+        "- Feature Area: User Experience  \n- Bug or Request: Request  \n- Severity: Low"
+      ]
+    }
+  ]
+}

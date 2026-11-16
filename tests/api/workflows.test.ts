@@ -90,7 +90,7 @@ describe('POST /api/workflows: running', () => {
     expect(events[0].data).toMatchObject({ demo: true, steps: [{ type: 'clean' }, { type: 'summarize' }] })
     const done = events.at(-1)!.data as { results: { status: string; totals: object } }
     expect(done.results.status).toBe('completed')
-    expect(done.results.totals).toEqual({ inputTokens: 20, outputTokens: 8, model: 'openai/gpt-oss-20b' })
+    expect(done.results.totals).toMatchObject({ inputTokens: 20, outputTokens: 8, model: 'openai/gpt-oss-20b', retries: 0 })
   })
 
   it('stores a demo run with a hashed client id, one trace row per step and the rollups', async () => {

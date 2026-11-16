@@ -12,6 +12,10 @@ export const STEP_LABELS: Record<string, string> = {
 export const ms = (n: number | null | undefined) =>
   n == null ? '–' : n >= 1000 ? `${(n / 1000).toFixed(2)} s` : `${Math.round(n)} ms`
 
+/** Cost at list price; tiny numbers stay readable. */
+export const usd = (n: number | null | undefined) =>
+  n == null ? '–' : n === 0 ? '$0' : n < 0.0001 ? `$${(n * 1e6).toFixed(1)}µ` : `$${n.toFixed(5)}`
+
 const shortModel = (m: string) => m.split('/').pop() ?? m
 
 /** One line of per-step trace facts: latency, time to first token, tokens and model. */
@@ -22,6 +26,8 @@ export function TraceChips({ trace, className = '' }: { trace: StepTrace; classN
     ['tokens in/out', `${trace.inputTokens} / ${trace.outputTokens}`],
   ]
   if (trace.reasoningTokens) items.push(['reasoning', String(trace.reasoningTokens)])
+  if (trace.costUsd != null) items.push(['est. cost', usd(trace.costUsd)])
+  if (trace.attempts && trace.attempts > 1) items.push(['attempts', String(trace.attempts)])
   items.push(['model', shortModel(trace.model)])
   return (
     <dl className={`flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-muted-foreground ${className}`}>

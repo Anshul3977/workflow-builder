@@ -93,6 +93,8 @@ export interface RunStreamHandlers {
   onStepStart?: (e: { index: number; stepId: string; stepType: string }) => void
   onDelta?: (e: { index: number; text: string }) => void
   onStepEnd?: (e: { index: number; result: StepResult }) => void
+  /** A step attempt failed and will be retried; its partial output should be discarded. */
+  onRetry?: (e: { index: number; attempt: number; delayMs: number; reason: string }) => void
 }
 
 export const workflowApi = {
@@ -131,6 +133,7 @@ export const workflowApi = {
         else if (m.event === 'step-start') handlers.onStepStart?.(d)
         else if (m.event === 'delta') handlers.onDelta?.(d)
         else if (m.event === 'step-end') handlers.onStepEnd?.(d)
+        else if (m.event === 'retry') handlers.onRetry?.(d)
         else if (m.event === 'done') return d
         else if (m.event === 'error') {
           const e = m.data as { message?: string; code?: string }

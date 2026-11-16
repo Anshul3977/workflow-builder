@@ -201,6 +201,8 @@ export default function BuilderPage() {
           ),
         onStepStart: (e) => patch(e.index, (st) => ({ ...st, status: 'running' })),
         onDelta: (e) => patch(e.index, (st) => ({ ...st, output: st.output + e.text })),
+        onRetry: (e) =>
+          patch(e.index, (st) => ({ ...st, output: '', retry: { attempt: e.attempt, delayMs: e.delayMs, reason: e.reason } })),
         onStepEnd: (e) =>
           patch(e.index, (st) => ({
             ...st,

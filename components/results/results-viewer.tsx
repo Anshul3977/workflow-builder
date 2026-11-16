@@ -3,7 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { StepResultCard } from './step-result-card'
-import { TraceWaterfall } from './trace'
+import { usd, TraceWaterfall } from './trace'
 import type { WorkflowRun } from '@/types/results'
 import { format } from 'date-fns'
 
@@ -58,6 +58,12 @@ export function ResultsViewer({ run }: ResultsViewerProps) {
             {totalTokens > 0 && (
               <p className="text-xs text-muted-foreground font-mono">
                 {tokensIn.toLocaleString()} in · {(totalTokens - tokensIn).toLocaleString()} out
+              </p>
+            )}
+            {run.results?.totals?.costUsd != null && (
+              <p className="text-xs text-muted-foreground font-mono" data-testid="run-cost">
+                est. {usd(run.results.totals.costUsd)} at Groq list price
+                {run.results.totals.retries ? ` · ${run.results.totals.retries} retr${run.results.totals.retries === 1 ? 'y' : 'ies'}` : ''}
               </p>
             )}
           </div>

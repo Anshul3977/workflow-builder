@@ -15,6 +15,8 @@ export interface LiveStep {
   output: string
   error?: string
   trace?: StepTrace
+  /** Set when an attempt failed and the step is being retried. */
+  retry?: { attempt: number; delayMs: number; reason: string }
 }
 
 export interface LiveRunState {
@@ -86,6 +88,11 @@ export function LiveRun({ state }: { state: LiveRunState }) {
                     <span className="ml-0.5 inline-block h-4 w-1.5 translate-y-0.5 animate-pulse bg-primary motion-reduce:animate-none" aria-hidden />
                   )}
                 </div>
+              )}
+              {s.retry && s.status === 'running' && (
+                <p className="text-xs text-amber-600 dark:text-amber-400" data-testid="retry-note">
+                  Attempt {s.retry.attempt} failed ({s.retry.reason}). Retrying after {ms(s.retry.delayMs)}…
+                </p>
               )}
               {s.error && <p className="text-sm text-destructive">{s.error}</p>}
               {s.trace && <TraceChips trace={s.trace} />}
