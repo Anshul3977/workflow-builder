@@ -40,7 +40,7 @@ export function ResultsViewer({ run }: ResultsViewerProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Workflow Run</h3>
-            <p className="text-lg font-semibold">{runName}</p>
+            <p className="text-lg font-semibold break-words">{runName}</p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
@@ -100,7 +100,7 @@ export function ResultsViewer({ run }: ResultsViewerProps) {
 
       <Card className="p-5 md:p-6 bg-muted/50">
         <h3 className="text-sm font-medium mb-3">Original Input</h3>
-        <div className="bg-background p-4 rounded border text-sm text-foreground max-h-40 overflow-y-auto leading-relaxed">
+        <div className="bg-background p-4 rounded border text-sm text-foreground max-h-40 overflow-y-auto break-words leading-relaxed">
           {run.input}
         </div>
       </Card>

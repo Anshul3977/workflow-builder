@@ -54,7 +54,7 @@ export function StepTypeSelector({ onSelectType }: StepTypeSelectorProps) {
           <Button
             key={step.type}
             variant="outline"
-            className="h-auto p-4 flex flex-col items-start gap-2 justify-start hover:bg-accent"
+            className="h-auto w-full whitespace-normal p-4 flex flex-col items-start gap-2 justify-start text-left hover:bg-accent"
             onClick={() => onSelectType(step.type)}
           >
             <div className="flex items-center gap-2">

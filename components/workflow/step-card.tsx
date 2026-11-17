@@ -3,21 +3,13 @@
 import { Trash2, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { STEP_LABELS, stepSummary } from '@/lib/step-summary'
 import type { WorkflowStep } from '@/types/workflow'
 
 interface StepCardProps {
   step: WorkflowStep
   onDelete: (stepId: string) => void
   onConfigure: (stepId: string) => void
-}
-
-const stepTypeLabels: Record<string, string> = {
-  clean: 'Clean Text',
-  summarize: 'Summarize Text',
-  extract: 'Extract Key Points',
-  categorize: 'Categorize',
-  sentiment: 'Sentiment Analysis',
-  translate: 'Translate',
 }
 
 const stepTypeColors: Record<string, string> = {
@@ -30,39 +22,38 @@ const stepTypeColors: Record<string, string> = {
 }
 
 export function StepCard({ step, onDelete, onConfigure }: StepCardProps) {
+  const label = STEP_LABELS[step.type] || step.type
   return (
-    <Card className="px-5 py-4 md:px-6 flex items-center justify-between hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-4 flex-1">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted font-semibold text-sm">
+    <Card className="px-4 py-4 sm:px-5 md:px-6 flex items-center justify-between gap-2 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted font-semibold text-sm shrink-0">
           {step.position + 1}
         </div>
-        <div>
-          <p className="font-medium">{stepTypeLabels[step.type] || step.type}</p>
-          <p className="text-xs text-muted-foreground">
-            {Object.keys(step.config.parameters).length > 0
-              ? `${Object.keys(step.config.parameters).length} parameter(s) configured`
-              : 'No parameters configured'}
-          </p>
-        </div>
-        <div className={`ml-auto hidden md:inline px-2 py-1 rounded text-xs font-medium ${stepTypeColors[step.type]}`}>
-          {step.type}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-medium">{label}</p>
+            <span className={`hidden md:inline px-2 py-0.5 rounded text-xs font-medium ${stepTypeColors[step.type]}`}>
+              {step.type}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">{stepSummary(step, step.position)}</p>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-1 shrink-0">
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={() => onConfigure(step.id)}
-          title="Configure step"
+          aria-label={`Configure ${label}`}
         >
           <Settings2 className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={() => onDelete(step.id)}
           className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          title="Delete step"
+          aria-label={`Remove ${label}`}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

@@ -48,6 +48,23 @@ type DbTrace = {
   output_tokens: number
   reasoning_tokens: number
   started_at: string | null
+  attempts?: number | null
+  cost_usd?: number | null
+}
+
+function traceFromRow(t: DbTrace): NonNullable<StepResult['trace']> {
+  return {
+    model: t.model ?? '',
+    latencyMs: t.latency_ms,
+    ttftMs: t.ttft_ms,
+    providerMs: t.provider_ms,
+    inputTokens: t.input_tokens,
+    outputTokens: t.output_tokens,
+    reasoningTokens: t.reasoning_tokens,
+    startedAt: t.started_at ?? '',
+    ...(t.attempts != null ? { attempts: t.attempts } : {}),
+    ...(t.cost_usd != null ? { costUsd: t.cost_usd } : {}),
+  }
 }
 
 // Older runs stored no trace in their JSON; fill it from the trace table when present.
@@ -57,18 +74,15 @@ function withTraces(results: WorkflowRun['results'], traces?: DbTrace[]): Workfl
     ...results,
     steps: results.steps.map((s, i) => {
       const t = traces.find((x) => x.step_index === i)
-      if (s.trace || !t) return s
+      if (!t) return s
+      const fromRow = traceFromRow(t)
+      if (!s.trace) return { ...s, trace: fromRow }
       return {
         ...s,
         trace: {
-          model: t.model ?? '',
-          latencyMs: t.latency_ms,
-          ttftMs: t.ttft_ms,
-          providerMs: t.provider_ms,
-          inputTokens: t.input_tokens,
-          outputTokens: t.output_tokens,
-          reasoningTokens: t.reasoning_tokens,
-          startedAt: t.started_at ?? '',
+          ...s.trace,
+          attempts: s.trace.attempts ?? fromRow.attempts,
+          costUsd: s.trace.costUsd ?? fromRow.costUsd,
         },
       }
     }),
@@ -76,7 +90,7 @@ function withTraces(results: WorkflowRun['results'], traces?: DbTrace[]): Workfl
 }
 
 // Maps a DB record (snake_case) to the frontend WorkflowRun (camelCase)
-function mapDbRunToWorkflowRun(dbRun: Record<string, unknown>): WorkflowRun {
+export function mapDbRunToWorkflowRun(dbRun: Record<string, unknown>): WorkflowRun {
   return {
     id: dbRun.id as string,
     workflowId: (dbRun.workflow_id as string) || undefined,

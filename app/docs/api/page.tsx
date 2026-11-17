@@ -47,7 +47,7 @@ export default function ApiDocsPage() {
   const grouped = openapi.tags.map((t) => ({ ...t, ops: ops.filter((o) => o.op.tags[0] === t.name && !(o.path.startsWith('/api/auth') && o.method !== 'get')) }))
 
   return (
-    <main className="mx-auto max-w-4xl space-y-8 px-4 py-10">
+    <div className="mx-auto max-w-4xl space-y-8">
       <header className="space-y-3">
         <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">OpenAPI {openapi.openapi}</p>
         <h1 className="text-3xl font-semibold tracking-tight">{openapi.info.title}</h1>
@@ -111,6 +111,6 @@ export default function ApiDocsPage() {
           ))}
         </section>
       ))}
-    </main>
+    </div>
   )
 }

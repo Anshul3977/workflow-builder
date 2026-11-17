@@ -7,13 +7,12 @@ import './globals.css'
 import { MainLayout } from '@/components/layout/main-layout'
 import { AuthProvider } from '@/lib/auth-provider'
 
-const _geist = Geist({ subsets: ['latin'] })
-const _geistMono = Geist_Mono({ subsets: ['latin'] })
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
   title: 'Workflow Builder',
   description: 'Chain LLM text steps into a pipeline, run it, and inspect every step. Try templates without an account.',
-  generator: 'v0.app',
   metadataBase: new URL('https://workflow-builder-umber.vercel.app'),
   openGraph: {
     title: 'Workflow Builder',
@@ -28,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <AuthProvider>

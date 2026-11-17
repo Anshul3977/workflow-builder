@@ -19,11 +19,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { AuthGuard } from '@/components/auth/auth-guard'
+import { Card } from '@/components/ui/card'
+import { useAuth } from '@/lib/auth-provider'
+import Link from 'next/link'
 
 export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isClearing, setIsClearing] = useState(false)
+  const { user, isLoading: authLoading } = useAuth()
   const runs = useHistoryStore((state) => state.runs)
   const setRuns = useHistoryStore((state) => state.setRuns)
 
@@ -41,8 +44,13 @@ export default function HistoryPage() {
   }, [setRuns])
 
   useEffect(() => {
+    if (authLoading) return
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
     fetchHistory()
-  }, [fetchHistory])
+  }, [authLoading, user, fetchHistory])
 
   const handleClearHistory = async () => {
     try {
@@ -58,8 +66,28 @@ export default function HistoryPage() {
     }
   }
 
+  if (!authLoading && !user) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Workflow History</h1>
+          <p className="text-muted-foreground mt-2">Past runs are saved to your account.</p>
+        </div>
+        <Card className="p-6 md:p-8 space-y-4">
+          <p className="text-sm leading-relaxed">
+            You can run a template without signing up. Log in to keep the runs, open them later, and clear them when you want.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild><Link href="/login">Log in</Link></Button>
+            <Button asChild variant="outline"><Link href="/signup">Sign up</Link></Button>
+            <Button asChild variant="ghost"><Link href="/builder">Back to the builder</Link></Button>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <AuthGuard>
       <div className="space-y-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -109,6 +137,5 @@ export default function HistoryPage() {
           <HistoryTable runs={runs} />
         )}
       </div>
-    </AuthGuard>
   )
 }

@@ -91,8 +91,11 @@ export default function SignupPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            minLength={8}
                             autoComplete="new-password"
+                            aria-describedby="password-hint"
                         />
+                        <p id="password-hint" className="text-xs text-muted-foreground">At least 8 characters.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="confirm-password">Confirm Password</Label>
