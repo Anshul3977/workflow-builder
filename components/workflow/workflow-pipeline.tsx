@@ -23,22 +23,22 @@ export function WorkflowPipeline({
       <h2 className="text-lg font-semibold">Processing Pipeline</h2>
 
       {workflow.steps.length > 0 ? (
-        <div className="space-y-3">
+        <ol className="space-y-3">
           {workflow.steps.map((step, index) => (
-            <div key={step.id}>
+            <li key={step.id}>
               <StepCard
                 step={step}
                 onDelete={onRemoveStep}
                 onConfigure={onConfigureStep}
               />
-              {index < workflow.steps.length - 1 && (
-                <div className="flex justify-center py-2">
+              {index < workflow.steps.length - 1 ? (
+                <div className="flex justify-center py-2" aria-hidden>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </div>
-              )}
-            </div>
+              ) : null}
+            </li>
           ))}
-        </div>
+        </ol>
       ) : (
         <div className="rounded-lg border border-dashed border-border p-8 text-center">
           <p className="text-muted-foreground">No steps added yet. Start by adding your first processing step below.</p>

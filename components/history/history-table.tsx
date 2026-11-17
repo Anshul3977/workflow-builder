@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import type { WorkflowRun } from '@/types/results'
 
 interface HistoryTableProps {
@@ -43,8 +44,28 @@ export function HistoryTable({ runs }: HistoryTableProps) {
   }
 
   return (
-    <div className="border rounded-lg overflow-x-auto">
-      <Table className="min-w-[600px]">
+    <>
+    <ul className="space-y-3 md:hidden">
+      {runs.map((run) => {
+        const isSuccess = run.status === 'completed'
+        return (
+          <li key={run.id}>
+            <Card className="space-y-3 p-4">
+              <p className="font-medium leading-snug break-words">{getRunName(run.input)}</p>
+              <p className="text-xs text-muted-foreground">{formatDate(run.completedAt || run.createdAt)}</p>
+              <div className="flex items-center justify-between gap-3">
+                <Badge variant={isSuccess ? 'default' : 'destructive'}>{isSuccess ? 'Success' : 'Failed'}</Badge>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/results/${run.id}`}>View</Link>
+                </Button>
+              </div>
+            </Card>
+          </li>
+        )
+      })}
+    </ul>
+    <div className="hidden md:block border rounded-lg overflow-x-auto">
+      <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
             <TableHead className="min-w-[200px]">Name</TableHead>
@@ -83,11 +104,9 @@ export function HistoryTable({ runs }: HistoryTableProps) {
                   {formatDate(run.completedAt || run.createdAt)}
                 </TableCell>
                 <TableCell>
-                  <Link href={`/results/${run.id}`}>
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
-                  </Link>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/results/${run.id}`}>View</Link>
+                  </Button>
                 </TableCell>
               </TableRow>
             )
@@ -95,5 +114,6 @@ export function HistoryTable({ runs }: HistoryTableProps) {
         </TableBody>
       </Table>
     </div>
+    </>
   )
 }

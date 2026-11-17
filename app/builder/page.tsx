@@ -22,6 +22,7 @@ import { TemplateGallery } from '@/components/workflow/template-gallery'
 import { Save, FolderOpen, Trash2, X, KeyRound, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { LiveRun, type LiveRunState } from '@/components/results/live-run'
+import { inputLimit, inputTooLong } from '@/lib/run-limits'
 
 export default function BuilderPage() {
   const router = useRouter()
@@ -57,6 +58,9 @@ export default function BuilderPage() {
   const addRun = useHistoryStore((state) => state.addRun)
 
   const selectedStep = workflow.steps.find((s) => s.id === selectedStepId) || null
+  const charLimit = inputLimit(isGuest)
+  const charCount = workflow.input.trim().length
+  const overLimit = inputTooLong(workflow.input, isGuest)
 
   const applyTemplate = useCallback(
     (t: WorkflowTemplate) => {
@@ -152,6 +156,7 @@ export default function BuilderPage() {
 
   const handleDeleteWorkflow = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!window.confirm('Delete this saved workflow?')) return
     try {
       await savedWorkflowApi.delete(id)
       toast.success('Workflow deleted')
@@ -256,8 +261,8 @@ export default function BuilderPage() {
               <span className="font-medium">Demo mode.</span> Pick a template below and run it without an account (5 runs per hour). Log in to build your own steps and save them.
             </p>
             <div className="flex gap-2">
-              <Link href="/login"><Button size="sm" variant="outline">Log in</Button></Link>
-              <Link href="/signup"><Button size="sm">Sign up</Button></Link>
+              <Button asChild size="sm" variant="outline"><Link href="/login">Log in</Link></Button>
+              <Button asChild size="sm"><Link href="/signup">Sign up</Link></Button>
             </div>
           </Card>
         )}
@@ -295,7 +300,9 @@ export default function BuilderPage() {
         {showSaveDialog && (
           <Card className="p-4 border-2 border-primary/20 bg-primary/5">
             <div className="flex items-center gap-3">
+              <label htmlFor="workflow-name" className="sr-only">Workflow name</label>
               <Input
+                id="workflow-name"
                 placeholder="Workflow name..."
                 value={workflowName}
                 onChange={(e) => setWorkflowName(e.target.value)}
@@ -306,7 +313,7 @@ export default function BuilderPage() {
               <Button onClick={handleSaveWorkflow} disabled={isSaving} size="sm">
                 {isSaving ? <Spinner className="h-4 w-4" /> : 'Save'}
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowSaveDialog(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setShowSaveDialog(false)} aria-label="Cancel save">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -318,7 +325,7 @@ export default function BuilderPage() {
           <Card className="p-4 border-2">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-sm">Saved Workflows</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowSavedList(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setShowSavedList(false)} aria-label="Close saved workflows">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -331,22 +338,23 @@ export default function BuilderPage() {
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {savedWorkflows.map((saved) => (
-                  <div
-                    key={saved.id}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => handleLoadWorkflow(saved)}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{saved.name}</p>
+                  <div key={saved.id} className="flex items-center gap-2 rounded-lg border p-2 transition-colors hover:bg-muted/50">
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 rounded-md px-2 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => handleLoadWorkflow(saved)}
+                    >
+                      <p className="truncate text-sm font-medium">{saved.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {(saved.steps as unknown[]).length} step{(saved.steps as unknown[]).length !== 1 ? 's' : ''}
                       </p>
-                    </div>
+                    </button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={(e) => handleDeleteWorkflow(saved.id, e)}
-                      className="text-destructive hover:text-destructive ml-2 shrink-0"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      aria-label={`Delete ${saved.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -377,15 +385,18 @@ export default function BuilderPage() {
                 value={workflow.input}
                 onChange={(e) => setInput(e.target.value)}
                 className="min-h-[200px] resize-none"
+                aria-describedby="input-count"
               />
-              <p className="text-xs text-muted-foreground">
-                {workflow.input.length} characters
+              <p id="input-count" className={`text-xs ${overLimit ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {charCount.toLocaleString('en-US')} / {charLimit.toLocaleString('en-US')} characters
+                {isGuest ? ' · demo limit' : ''}
+                {overLimit ? '. Shorten the text to run it.' : ''}
               </p>
             </div>
 
             <Button
               onClick={handleRunWorkflow}
-              disabled={isRunning || workflow.steps.length === 0 || !workflow.input.trim() || aiReady === false || (isGuest && !templateSlug)}
+              disabled={isRunning || workflow.steps.length === 0 || !workflow.input.trim() || overLimit || aiReady === false || (isGuest && !templateSlug)}
               className="w-full"
               size="lg"
             >
@@ -396,6 +407,8 @@ export default function BuilderPage() {
                 </>
               ) : isGuest && !templateSlug ? (
                 'Pick a template to run without an account'
+              ) : overLimit ? (
+                'Input is over the limit'
               ) : (
                 'Run Workflow'
               )}

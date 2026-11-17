@@ -3,6 +3,7 @@
 import { STEP_TYPES } from '@/lib/server/llm'
 import { DEFAULT_POLICY, LIMITS } from '@/lib/server/retry'
 import { DEMO_RUNS_PER_HOUR, USER_RUNS_PER_HOUR } from '@/lib/server/limits'
+import { USER_INPUT_MAX } from '@/lib/run-limits'
 
 const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` })
 const jsonBody = (schema: object) => ({ content: { 'application/json': { schema } } })
@@ -220,7 +221,7 @@ const spec = {
         type: 'object',
         required: ['input'],
         properties: {
-          input: { type: 'string', minLength: 1, maxLength: 8000 },
+          input: { type: 'string', minLength: 1, maxLength: USER_INPUT_MAX },
           steps: { type: 'array', maxItems: 8, items: ref('Step'), description: 'Signed-in users only; guests use templateSlug' },
           templateSlug: { type: 'string', maxLength: 100 },
           workflowId: { type: 'string', format: 'uuid' },

@@ -71,17 +71,15 @@ export default function HomePage() {
           into one pipeline, run it, and see what every step did.
         </p>
 
-        <div className="flex items-center justify-center gap-4 pt-2">
-          <Link href="/builder">
-            <Button size="lg" className="gap-2 px-8 h-12 text-base">
+        <div className="flex flex-col items-stretch justify-center gap-3 pt-2 sm:flex-row sm:items-center">
+          <Button asChild size="lg" className="h-12 gap-2 px-8 text-base">
+            <Link href="/builder">
               Open the builder <ArrowRight className="h-5 w-5" />
-            </Button>
-          </Link>
-          <Link href="/history">
-            <Button variant="outline" size="lg" className="px-8 h-12 text-base">
-              View History
-            </Button>
-          </Link>
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="h-12 px-8 text-base">
+            <Link href="/history">View History</Link>
+          </Button>
         </div>
       </div>
 

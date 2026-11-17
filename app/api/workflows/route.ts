@@ -6,13 +6,14 @@ import { saveStepTrace, finishRun, failRun } from '@/lib/server/traces'
 import { encodeSse } from '@/lib/sse'
 import { AiKeyMissingError, hasAiKey } from '@/lib/server/llm'
 import { clientHash, runsLeft, DEMO_RUNS_PER_HOUR, USER_RUNS_PER_HOUR } from '@/lib/server/limits'
+import { DEMO_INPUT_MAX, USER_INPUT_MAX } from '@/lib/run-limits'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
 
 const RunSchema = z.object({
   steps: z.array(StepSchema).max(8).optional(),
-  input: z.string().trim().min(1).max(8000),
+  input: z.string().trim().min(1).max(USER_INPUT_MAX),
   workflowId: z.string().uuid().optional(),
   templateSlug: z.string().max(100).optional(),
 })
@@ -33,7 +34,7 @@ async function prepare(req: Request): Promise<Prepared | Response> {
 
   if (!user) {
     if (!body.templateSlug) return json({ success: false, code: 'LOGIN_REQUIRED', error: 'Log in to run your own steps, or pick a template to try it without an account.' }, 401)
-    if (body.input.length > 2000) return json({ success: false, error: 'Demo runs are limited to 2,000 characters.' }, 400)
+    if (body.input.length > DEMO_INPUT_MAX) return json({ success: false, error: 'Demo runs are limited to 2,000 characters.' }, 400)
     client = clientHash(req)
     if ((await runsLeft({ client })) <= 0)
       return json({ success: false, code: 'RATE_LIMITED', error: `Demo limit reached (${DEMO_RUNS_PER_HOUR} runs per hour). Log in for more, or try again later.` }, 429)

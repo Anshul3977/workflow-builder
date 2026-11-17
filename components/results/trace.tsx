@@ -1,13 +1,7 @@
 import type { StepResult, StepTrace } from '@/types/results'
+import { STEP_LABELS } from '@/lib/step-summary'
 
-export const STEP_LABELS: Record<string, string> = {
-  clean: 'Clean Text',
-  summarize: 'Summarize Text',
-  extract: 'Extract Key Points',
-  categorize: 'Categorize',
-  sentiment: 'Sentiment Analysis',
-  translate: 'Translate',
-}
+export { STEP_LABELS }
 
 export const ms = (n: number | null | undefined) =>
   n == null ? '–' : n >= 1000 ? `${(n / 1000).toFixed(2)} s` : `${Math.round(n)} ms`

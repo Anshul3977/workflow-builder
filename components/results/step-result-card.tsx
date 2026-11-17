@@ -31,8 +31,10 @@ export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
   return (
     <Card className="overflow-hidden">
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full"
+        aria-expanded={isExpanded}
       >
         <div className="px-5 py-4 md:px-6 flex items-center justify-between hover:bg-muted/50 transition-colors">
           <div className="flex items-center gap-4 flex-1 text-left">
@@ -68,6 +70,7 @@ export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label={copiedField === 'input' ? 'Copied input' : 'Copy input'}
                 onClick={() => copyToClipboard(result.input, 'input')}
               >
                 {copiedField === 'input' ? (
@@ -77,7 +80,7 @@ export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
                 )}
               </Button>
             </div>
-            <div className="bg-background p-4 rounded border text-sm text-foreground max-h-32 overflow-y-auto leading-relaxed">
+            <div className="bg-background p-4 rounded border text-sm text-foreground max-h-32 overflow-y-auto break-words leading-relaxed">
               {result.input}
             </div>
           </div>
@@ -88,6 +91,7 @@ export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label={copiedField === 'output' ? 'Copied output' : 'Copy output'}
                 onClick={() => copyToClipboard(result.output, 'output')}
               >
                 {copiedField === 'output' ? (
@@ -97,7 +101,7 @@ export function StepResultCard({ result, index = 0 }: StepResultCardProps) {
                 )}
               </Button>
             </div>
-            <div className="bg-background p-4 rounded border text-sm text-foreground max-h-32 overflow-y-auto leading-relaxed">
+            <div className="bg-background p-4 rounded border text-sm text-foreground max-h-32 overflow-y-auto break-words leading-relaxed">
               {result.output || 'No output'}
             </div>
           </div>
